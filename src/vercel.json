@@ -1,0 +1,5 @@
+{
+   "redirects": [
+     { "source": "/(.*)", "destination": "https://scrum-poker-online.vercel.app/" }
+   ]
+ }

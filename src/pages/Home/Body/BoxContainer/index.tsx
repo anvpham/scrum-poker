@@ -138,9 +138,9 @@ const BoxContainer: React.FC<Props> = ({
   };
 
   const addJiraToken = async () => {
-    if (jiraDomain.length > 50 || (jiraToken as string).length > 50 || jiraEmail.length > 50) {
+    if (jiraDomain.length > 100 || (apiToken as string).length > 100 || jiraEmail.length > 100) {
       alert(`'Fields can't be too long`);
-    } else if (jiraEmail && jiraToken && jiraDomain) {
+    } else if (jiraEmail && apiToken && jiraDomain) {
       setIsLoading(true);
       const data = {
         jiraDomain,

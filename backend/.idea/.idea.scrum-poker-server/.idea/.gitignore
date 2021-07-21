@@ -1,0 +1,13 @@
+﻿# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/contentModel.xml
+/projectSettingsUpdater.xml
+/modules.xml
+/.idea.scrum-poker-server.iml
+# Datasource local storage ignored files
+/../../../../../../../../../../:\Users\Admin\source\repos\scrum-poker\backend\.idea\.idea.scrum-poker-server\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/

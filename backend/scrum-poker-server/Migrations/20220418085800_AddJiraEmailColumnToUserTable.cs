@@ -2,22 +2,21 @@
 
 namespace scrum_poker_server.Migrations
 {
-    public partial class AddJiraTokenToUser : Migration
+    public partial class AddJiraEmailColumnToUserTable : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "JiraToken",
+            migrationBuilder.AddColumn<string>(
+                name: "JiraEmail",
                 table: "Users",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
+                type: "nvarchar(max)",
+                nullable: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "JiraToken",
+                name: "JiraEmail",
                 table: "Users");
         }
     }

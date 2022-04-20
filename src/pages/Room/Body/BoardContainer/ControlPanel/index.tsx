@@ -161,7 +161,7 @@ const ControlPanel: React.FC<Props> = ({
           </div>
           <div className={style.explanation}>
             <Typo>
-              You need to enable the default scrren or all the screens with the url:{' '}
+              You need to enable the default scren using the url:{' '}
               <Typo type="span" className={style.url}>
                 https://{jiraDomain}
                 /secure/admin/AssociateFieldToScreens!default.jspa?fieldId=customfield_10026
@@ -213,13 +213,7 @@ const ControlPanel: React.FC<Props> = ({
           <Button
             className={style.button}
             onClick={
-              currentStory?.isJiraStory
-                ? async () => {
-                    roomConnection.send('ChangeRoomState', roomCode, 'waiting');
-                    roomConnection.send('ChangeCurrentStory', roomCode, -1);
-                    await submitPointForJiraStory();
-                  }
-                : async () => {
+                  async () => {
                     roomConnection.send('ChangeRoomState', roomCode, 'waiting');
                     roomConnection.send('ChangeCurrentStory', roomCode, -1);
                     if (currentStoryPoint !== -1) {

@@ -60,8 +60,7 @@ namespace scrum_poker_server.Controllers
             {
                 Email = data.Email,
                 Password = hashedPassword,
-                Name = data.UserName,
-                Account = new Account()
+                Name = data.UserName
             };
 
             // Create a room for user
@@ -74,8 +73,6 @@ namespace scrum_poker_server.Controllers
                 Name = $"{user.Name}'s room",
                 Description = "Change room description here"
             };
-
-            user.Account.Rooms = new List<Room> { room };
 
             await _dbContext.UserRooms.AddAsync(new UserRoom
             {

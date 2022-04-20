@@ -138,13 +138,18 @@ namespace scrum_poker_server.Controllers
             else
             {
                 var submittedPoint = story.SubmittedPointByUsers.FirstOrDefault(i => i.UserId == userId);
-                if (submittedPoint != null) _dbContext.Remove(submittedPoint);
-
-                story.SubmittedPointByUsers.Add(new Models.SubmittedPointByUser
+                if (submittedPoint != null)
                 {
-                    Point = data.Point,
-                    User = userRoom.User
-                });
+                    submittedPoint.Point = data.Point;
+                }
+                else
+                {
+                    story.SubmittedPointByUsers.Add(new Models.SubmittedPointByUser
+                    {
+                        Point = data.Point,
+                        User = userRoom.User
+                    });
+                }
             }
 
             await _dbContext.SaveChangesAsync();

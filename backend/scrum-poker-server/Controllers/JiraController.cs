@@ -51,10 +51,10 @@ namespace scrum_poker_server.Controllers
 
       if (!isDomainValid) return StatusCode(404, new { error = "The domain is not valid" });
 
-      var JiraToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{data.JiraEmail}:{data.APIToken}"));
+      var base64String = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{data.JiraEmail}:{data.APIToken}"));
 
       var request = new HttpRequestMessage(HttpMethod.Get, $"https://{data.JiraDomain}/rest/api/3/myself");
-      request.Headers.Add("Authorization", $"Basic {JiraToken}");
+      request.Headers.Add("Authorization", $"Basic {base64String}");
 
       var response = await client.SendAsync(request);
 
@@ -81,13 +81,14 @@ namespace scrum_poker_server.Controllers
         _dbContext.Stories.RemoveRange(userRoom.Room.Stories);
       }
 
-      userRoom.User.JiraToken = JiraToken;
+      userRoom.User.JiraToken = data.APIToken;
       userRoom.User.JiraDomain = data.JiraDomain;
       userRoom.Room.JiraDomain = data.JiraDomain;
+      userRoom.User.JiraEmail = data.JiraEmail;
 
       await _dbContext.SaveChangesAsync();
 
-      return StatusCode(201, new { jiraToken = JiraToken, jiraDomain = data.JiraDomain });
+      return StatusCode(201, new { jiraToken = data.APIToken, jiraDomain = data.JiraDomain });
     }
 
     [HttpPost, Route("fetchstories"), Authorize(Policy = "OfficialUsers"), Consumes("application/json")]
@@ -100,7 +101,12 @@ namespace scrum_poker_server.Controllers
 
       var client = _clientFactory.CreateClient();
       var request = new HttpRequestMessage(HttpMethod.Get, $"https://{data.JiraDomain}/rest/api/3/issue/picker?query={data.Query}&currentJQL");
-      request.Headers.Add("Authorization", $"Basic {data.JiraToken}");
+
+      var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
+      var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+      var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user.JiraEmail}:{data.JiraToken}"));
+      request.Headers.Add("Authorization", $"Basic {base64String}");
 
       var response = await client.SendAsync(request);
 
@@ -141,9 +147,14 @@ namespace scrum_poker_server.Controllers
 
       var client = _clientFactory.CreateClient();
       var request = new HttpRequestMessage(HttpMethod.Get, $"https://{data.JiraDomain}/rest/api/3/issue/{data.IssueId}?fields=description,summary,customfield_10026&expand=renderedFields");
-      request.Headers.Add("Authorization", $"Basic {data.JiraToken}");
+
+      var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
+      var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+      var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user.JiraEmail}:{data.JiraToken}"));
+      request.Headers.Add("Authorization", $"Basic {base64String}");
 
       var response = await client.SendAsync(request);
+
       if (!response.IsSuccessStatusCode)
       {
         return StatusCode(404);
@@ -199,7 +210,11 @@ namespace scrum_poker_server.Controllers
 
       var client = _clientFactory.CreateClient();
       var request = new HttpRequestMessage(HttpMethod.Put, $"https://{data.JiraDomain}/rest/api/3/issue/{data.IssueId}");
-      request.Headers.Add("Authorization", $"Basic {data.JiraToken}");
+      var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
+      var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+      var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user.JiraEmail}:{data.JiraToken}"));
+      request.Headers.Add("Authorization", $"Basic {base64String}");
 
       var jsonData = JsonSerializer.Serialize(new JiraSubmitPointRequest { fields = new fields { customfield_10026 = data.Point } });
       var requestBody = new StringContent(jsonData, Encoding.UTF8, "application/json");

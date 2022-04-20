@@ -24,11 +24,6 @@ namespace scrum_poker_server.Models
 
     public User Owner { get; set; }
 
-    [ForeignKey("Account")]
-    public int? AccountId { get; set; }
-
-    public Account Account { get; set; }
-
     public ICollection<UserRoom> UserRooms { get; set; }
 
     public ICollection<Story> Stories { get; set; }

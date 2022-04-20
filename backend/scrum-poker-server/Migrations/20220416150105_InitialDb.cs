@@ -2,22 +2,10 @@
 
 namespace scrum_poker_server.Migrations
 {
-    public partial class ScaffoldInitialDb : Migration
+    public partial class InitialDb : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "Accounts",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Accounts", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -27,17 +15,12 @@ namespace scrum_poker_server.Migrations
                     Name = table.Column<string>(type: "nvarchar(25)", maxLength: 25, nullable: true),
                     Email = table.Column<string>(type: "varchar(255)", nullable: true),
                     Password = table.Column<string>(type: "varchar(255)", nullable: true),
-                    AccountId = table.Column<int>(type: "int", nullable: true)
+                    JiraToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JiraDomain = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_Accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -47,20 +30,14 @@ namespace scrum_poker_server.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Code = table.Column<string>(type: "char(6)", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    AccountId = table.Column<int>(type: "int", nullable: true)
+                    JiraDomain = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Rooms", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Rooms_Accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Rooms_Users_UserId",
                         column: x => x.UserId,
@@ -75,9 +52,11 @@ namespace scrum_poker_server.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Point = table.Column<int>(type: "int", nullable: true),
+                    Point = table.Column<int>(type: "int", nullable: false),
+                    IsJiraStory = table.Column<bool>(type: "bit", nullable: false),
+                    JiraIssueId = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     RoomId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: true)
                 },
@@ -151,11 +130,6 @@ namespace scrum_poker_server.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Rooms_AccountId",
-                table: "Rooms",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Rooms_UserId",
                 table: "Rooms",
                 column: "UserId");
@@ -184,13 +158,6 @@ namespace scrum_poker_server.Migrations
                 name: "IX_UserRooms_RoomId",
                 table: "UserRooms",
                 column: "RoomId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_AccountId",
-                table: "Users",
-                column: "AccountId",
-                unique: true,
-                filter: "[AccountId] IS NOT NULL");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -209,9 +176,6 @@ namespace scrum_poker_server.Migrations
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "Accounts");
         }
     }
 }

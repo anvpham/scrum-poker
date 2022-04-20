@@ -160,7 +160,10 @@ const App = () => {
   );
 };
 
-if (window.innerWidth < 1024) {
+ReactDOM.render(<App />, document.getElementById('root'));
+
+
+/*if (window.innerWidth < 1024) {
   ReactDOM.render(
     <h3 style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>
       Scrum Poker is not available on phone yet
@@ -168,5 +171,4 @@ if (window.innerWidth < 1024) {
     document.getElementById('root')
   );
 } else {
-  ReactDOM.render(<App />, document.getElementById('root'));
-}
+}*/

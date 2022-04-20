@@ -37,7 +37,10 @@ const Login: React.FC<Props> = ({ login, setIsTokenValid }) => {
           setIsTokenValid(true);
           history.push('/home');
           setIsLoading(false);
-        } else alert('Invalid username or password');
+        } else {
+          setIsLoading(false);
+          alert('Invalid username or password');
+        }
       } catch (err) {
         alert(err);
       }

@@ -35,7 +35,7 @@ namespace scrum_poker_server.Controllers
         {
             var roomCode = await new RoomCodeGenerator(_dbContext).Generate();
 
-            var user = _dbContext.Users.Include(u => u.Account).ThenInclude(a => a.Rooms).FirstOrDefault(u => u.Email == HttpContext.User.FindFirst(ClaimTypes.Email).Value);
+            var user = _dbContext.Users.FirstOrDefault(u => u.Email == HttpContext.User.FindFirst(ClaimTypes.Email).Value);
 
             var room = new Room
             {
@@ -44,8 +44,6 @@ namespace scrum_poker_server.Controllers
                 Name = data.RoomName,
                 Description = data.Description
             };
-
-            user.Account.Rooms.Add(room);
 
             await _dbContext.UserRooms.AddAsync(new UserRoom
             {

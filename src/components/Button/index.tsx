@@ -49,7 +49,7 @@ const Button: React.FC<Props> = ({
       disabled={disabled}
     >
       {children && <Typo type="span">{children}</Typo>}
-      {icon && <Icon className={children ? style.marginedIcon : style.normalIcon} name={icon} size="lg" />}
+      {icon && <Icon className={children ? style.marginedIcon : style.normalIcon} name={icon} />}
     </button>
   );
 };

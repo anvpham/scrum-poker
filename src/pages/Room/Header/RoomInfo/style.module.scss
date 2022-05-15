@@ -33,9 +33,17 @@
   font-weight: 400;
 }
 
-.leaveButton {
+.buttonContainer {
+  display: flex;
+}
+
+.button {
   margin-top: 0.5rem;
   height: 25px;
-  background-color: #e11900;
+  width: 110px;
   border-color: transparent;
+}
+
+.leaveButton {
+  background-color: #e11900;
 }

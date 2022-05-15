@@ -295,6 +295,22 @@ const StoriesContainer: React.FC<Props> = ({
           ''
         )}
       </div>
+      <div className={style.buttonContainer}>
+        <Button
+          className={`${style.button} ${style.importButton}`}
+          onClick={() => {}}
+          icon="upload"
+        >
+          Import
+        </Button>
+        <Button
+          className={`${style.button} ${style.exportButton}`}
+          onClick={() => {}}
+          icon="download"
+        >
+          Export
+        </Button>
+      </div>
       {GlobalRoomJiraDomain.roomJiraDomain ? (
         <div className={style.jiraDomain}>
           <Typo>Jira domain: {GlobalRoomJiraDomain.roomJiraDomain}</Typo>

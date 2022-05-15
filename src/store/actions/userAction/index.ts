@@ -27,7 +27,10 @@ export const signUp = (
     .then((response) => {
       if (response.ok) {
         return response.json();
-      } else return { isLoginFailed: true };
+      } else {
+        console.log(response.body);
+        return { isLoginFailed: true };
+      }
     })
     .then(({ jwtToken, userId, name, userRoomCode, expiration, email, isLoginFailed }: IUserInfoResponse) => {
       if (isLoginFailed) {
@@ -37,7 +40,6 @@ export const signUp = (
         date.setMinutes(date.getMinutes() + expiration);
         document.cookie = `jwtToken=${jwtToken};expires=${date};path=/`;
         document.cookie = `tokenExpiration=${date.toString()};expires=${date};path=/`;
-        document.cookie = `userName=${name};expires=${date};path=/`;
         if (email) {
           document.cookie = `officialUser=thisuserhasemail;expires=${date};path=/`;
         }

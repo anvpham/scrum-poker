@@ -5,5 +5,5 @@ import RoomPage from './Room';
 import SignUpPage from './SignUp';
 import LoginPage from './Login';
 import HomePage from './Home';
-
-export { WelcomePage, LandingPage, JoinRoomPage, RoomPage, SignUpPage, LoginPage, HomePage };
+import PageNotFound from './404Page';
+export { WelcomePage, LandingPage, JoinRoomPage, RoomPage, SignUpPage, LoginPage, HomePage, PageNotFound };

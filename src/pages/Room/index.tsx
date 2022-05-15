@@ -33,6 +33,7 @@ const Room: React.FC<Props> = ({ roomCode, role, updateRoomConnection, cleanUpRo
       window.addEventListener('beforeunload', () => {
         connection.send('RemoveFromChannel', roomCode);
         connection.stop();
+        cleanUpRoomData(initialRoomData);
       });
 
       return () => {

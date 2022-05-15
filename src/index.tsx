@@ -2,7 +2,7 @@ import ReactDOM from 'react-dom';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { LandingPage, JoinRoomPage, WelcomePage, RoomPage, SignUpPage, LoginPage, HomePage } from './pages';
+import { LandingPage, WelcomePage, RoomPage, SignUpPage, LoginPage, HomePage, PageNotFound } from './pages';
 import { store } from './store';
 import './index.scss';
 import { AUTHENTICATE, JOIN_ROOM, REFRESH_TOKEN } from '@scrpoker/constants/apis';
@@ -121,8 +121,6 @@ const App = () => {
           <Route path="/welcome">
             {isOfficialUser ? (
               <Redirect to={{ pathname: '/home' }} />
-            ) : isTokenValid ? (
-              <Redirect to={{ pathname: '/room/join' }} />
             ) : (
               <WelcomePage />
             )}
@@ -144,15 +142,11 @@ const App = () => {
           <Route path="/home" exact>
             {isTokenValid && isOfficialUser ? <HomePage /> : <Redirect to={{ pathname: '/login' }} />}
           </Route>
-          <Route path="/room/join" exact>
-            {isTokenValid && isOfficialUser ? (
-              <Redirect to={{ pathname: '/home' }} />
-            ) : (
-              <JoinRoomPage setIsTokenValid={setIsTokenValid} />
-            )}
-          </Route>
           <Route path="/room/:channel" exact>
             {isTokenValid ? <RoomPage /> : <Redirect to={{ pathname: '/room/join' }} />}
+          </Route>
+          <Route path="*">
+            <PageNotFound />
           </Route>
         </Switch>
       </Router>

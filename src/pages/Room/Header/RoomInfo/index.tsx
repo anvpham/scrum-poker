@@ -35,15 +35,15 @@ const RoomInfo: React.FC<Props> = ({ data, className = '' }) => {
           {members}
         </Typo>
       </Typo>
-      <Button
-        className={style.leaveButton}
-        onClick={() => {
-          history.push('/home');
-        }}
-        icon="sign-out-alt"
-      >
-        Leave
-      </Button>
+        <Button
+          className={`${style.button} ${style.leaveButton}`}
+          onClick={() => {
+            history.push('/home');
+          }}
+          icon="sign-out-alt"
+        >
+          Leave
+        </Button>
     </div>
   );
 };

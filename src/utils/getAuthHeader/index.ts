@@ -2,7 +2,9 @@ import CookieReader from 'js-cookie';
 
 const getAuthHeader = (): string => {
     const tokenExpiration = CookieReader.get('tokenExpiration');
-    if(tokenExpiration) {
+    const numberOfCookies = document.cookie.split(';');
+
+    if(tokenExpiration && numberOfCookies.length == 3) {
         const expirationDate = new Date(tokenExpiration);
         const currentDate = new Date();
 

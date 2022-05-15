@@ -14,7 +14,6 @@
 .firstColumn {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
   padding: 0 0.5rem;
 }
 
@@ -89,6 +88,30 @@
   margin-bottom: 1rem;
   padding: 0 0.5rem;
 }
+
+.buttonContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.button {
+  margin-top: 0.5rem;
+  height: 25px;
+  width: 110px;
+  border-color: transparent;
+}
+
+.exportButton {
+  background-color: #216C55;
+  
+}
+
+.importButton {
+  background-color: #276ef1;
+}
+
 
 @media only screen and (max-width: 1366px) {
   .storiesContainer {

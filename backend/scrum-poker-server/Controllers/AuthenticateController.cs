@@ -29,11 +29,12 @@ namespace scrum_poker_server.Controllers
         [Authorize(Policy = "AllUsers")]
         public async Task<IActionResult> Authenticate()
         {
-            var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var userRoom = await _dbContext.UserRooms.Include(ur => ur.Room).Include(ur => ur.User).FirstOrDefaultAsync(ur => ur.UserID == userId);
+            var userId = HttpContext.User.FindFirst("UserId").Value;
+            var room = await _dbContext.Rooms.FirstOrDefaultAsync(r => r.UserId.ToString() == userId);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
 
-            var jiraToken = userRoom.User.JiraToken;
-            var jiraDomain = userRoom.User.JiraDomain;
+            var jiraToken = user.JiraToken;
+            var jiraDomain = user.JiraDomain;
 
             if (jiraToken != null && jiraDomain != null)
             {
@@ -46,20 +47,20 @@ namespace scrum_poker_server.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    userRoom.User.JiraToken = null;
-                    userRoom.Room.JiraDomain = null;
+                    user.JiraToken = null;
+                    room.JiraDomain = null;
                     await _dbContext.SaveChangesAsync();
                 }
             }
 
             return Ok(new
             {
-                name = userRoom.User.Name,
-                userId = userRoom.UserID,
-                userRoomCode = userRoom.Room.Code,
-                email = userRoom.User.Email,
-                jiraToken = userRoom.User.JiraToken,
-                jiraDomain = userRoom.User.JiraDomain,
+                name = user.Name,
+                userId = user.Id,
+                userRoomCode = room.Code,
+                email = user.Email,
+                jiraToken = user.JiraToken,
+                jiraDomain = user.JiraDomain,
             }); ;
         }
     }

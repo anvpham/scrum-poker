@@ -62,7 +62,7 @@ namespace scrum_poker_server.Controllers
                 return StatusCode(422, new { error = "The room does not exist" });
             }
 
-            if (room.Stories.Count >= 10)
+            if (room.Stories.Count >= 20)
             {
                 return Forbid();
             }

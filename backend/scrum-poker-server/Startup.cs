@@ -99,11 +99,9 @@ namespace scrum_poker_server
             app.UseDeveloperExceptionPage();
          }
 
-         app.UseHttpsRedirection();
+         app.UseRouting();
 
          app.UseCors("MyPolicy");
-
-         app.UseRouting();
 
          app.UseAuthentication();
 

@@ -99,7 +99,7 @@ const BoxContainer: React.FC<Props> = ({
   };
 
   const handleRoomCodeChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
-    setRoomCode(value);
+    setRoomCode(value.trim());
   };
 
   const handleJiraEmailChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,7 +260,12 @@ const BoxContainer: React.FC<Props> = ({
           )}
         </div>
       </ReactModal>
-      <ReactModal closeTimeoutMS={100} isOpen={integrationModalIsOpen} style={reactModalStyle}>
+      <ReactModal
+        closeTimeoutMS={100}
+        isOpen={integrationModalIsOpen}
+        style={reactModalStyle}
+        onRequestClose={closeIntegrationModal}
+      >
         <div className={style.title}>
           <Typo type="h2">Integrate with Jira</Typo>
           <Icon className={style.closeButton} size="2x" name="window-close" onClick={closeIntegrationModal} />

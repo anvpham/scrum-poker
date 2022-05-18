@@ -13,6 +13,7 @@ interface Props {
   roomConnection: any;
   roomId?: number;
   jiraIssueIds: string[];
+  currentStory?: IStory;
   updateCurrentStory: (story: IStory | undefined) => IRoomAction;
   updateCurrentStoryPoint: (point: number) => IRoomAction;
   updateJiraIssueIds: (issueIds: string[]) => IRoomAction;
@@ -30,6 +31,7 @@ const Body: React.FC<Props> = ({
   roomConnection,
   roomId,
   jiraIssueIds,
+  currentStory,
   updateCurrentStory,
   updateCurrentStoryPoint,
   updateJiraIssueIds,
@@ -126,6 +128,12 @@ const Body: React.FC<Props> = ({
     }
 
     newStories.splice(newStories.indexOf(story as IStory), 1);
+    if (currentStory !== undefined) {
+      if (currentStory.id === id) {
+        updateCurrentStory(undefined);
+      }
+    }
+
     setStories(newStories);
   };
 
@@ -176,11 +184,12 @@ const Body: React.FC<Props> = ({
   );
 };
 
-const mapStateToProps = ({ roomData: { roomConnection, roomId, jiraIssueIds } }: IGlobalState) => {
+const mapStateToProps = ({ roomData: { roomConnection, roomId, jiraIssueIds, currentStory } }: IGlobalState) => {
   return {
     roomConnection,
     roomId,
     jiraIssueIds,
+    currentStory,
   };
 };
 

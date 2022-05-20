@@ -12,8 +12,14 @@
   left: 30px;
 }
 
-.userName {
+.userNameContainer {
   margin-top: 20px;
+  max-width: 85px;
+}
+
+.userName {
+  word-wrap: break-word
+
 }
 
 .host {

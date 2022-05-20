@@ -40,10 +40,12 @@
 .button {
   margin-top: 0.5rem;
   height: 25px;
-  width: 110px;
+  width: 100px;
   border-color: transparent;
 }
 
 .leaveButton {
-  background-color: #e11900;
+  background-color: #f8f9fa;
+  border: 1px solid #e11900;
+  color: #e11900;
 }

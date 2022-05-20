@@ -131,19 +131,13 @@ namespace scrum_poker_server.Controllers
         }
 
         // This API is used to check the availability of a room (valid room code, full people)
-        [AllowAnonymous]
-        [Authorize(Policy = "AllUsers")]
+        [Authorize(Policy = "OfficialUsers")]
         [HttpGet, Route("checkroom/{roomCode}")]
         public async Task<IActionResult> CheckRoom(string roomCode)
         {
             var room = await _dbContext.Rooms.FirstOrDefaultAsync(r => r.Code == roomCode);
             var userClaim = HttpContext.User.FindFirst("UserId");
-            var userId = -1;
-
-            if (userClaim != null)
-            {
-                userId = int.Parse(userClaim.Value);
-            }
+            var userId = int.Parse(userClaim.Value);
 
             if (room == null)
             {
@@ -156,10 +150,6 @@ namespace scrum_poker_server.Controllers
             else if (_roomService.FindRoom(roomCode).Users.Count >= 12)
             {
                 return StatusCode(403);
-            }
-            else if (userId == -1)
-            {
-                return Ok();
             }
             else if (_roomService.FindRoom(roomCode).Users.Find(u => u.Id == userId) != null)
             {

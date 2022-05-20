@@ -115,17 +115,27 @@ const BoxContainer: React.FC<Props> = ({
   };
 
   const join = async () => {
-    const roomStatus: IRoomStatus = await fetch(CHECK_ROOM(roomCode)).then((response) => {
+    const roomStatus: IRoomStatus = await fetch(CHECK_ROOM(roomCode), {
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    }).then((response) => {
       if (response.ok) {
         return { isAvailable: true };
       } else {
         if (response.status === 404) {
           return { isAvailable: false, errorMessage: 'The room does not exist' };
         }
+        else if (response.status === 403) {
+          return {
+            isAvailable: false,
+            errorMessage: 'The room is full now',
+          };
+        }
         return {
           isAvailable: false,
-          errorMessage: 'The room is full now',
-        };
+          errorMessage: 'You are currently in this room',
+        }
       }
     });
 
@@ -221,13 +231,6 @@ const BoxContainer: React.FC<Props> = ({
       actionName: 'Jira integration',
       onClick: () => {
         openIntegrationModal();
-      },
-    },
-    {
-      iconName: 'user-circle',
-      actionName: 'Profile',
-      onClick: () => {
-        alert(`Yeah ^^`);
       },
     },
   ];

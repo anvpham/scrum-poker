@@ -36,8 +36,8 @@ const Button: React.FC<Props> = ({
   const classes = `${style.button} ${widthClass} ${typeClass} ${className}`;
   return linkTo ? (
     <Link to={linkTo} className={`${classes} ${small ? style.small : ''}`}>
-      <Typo type="span">{children}</Typo>
       {icon && <Icon className={children ? style.marginedIcon : style.normalIcon} name={icon} />}
+      <Typo type="span">{children}</Typo>
     </Link>
   ) : (
     <button
@@ -48,8 +48,8 @@ const Button: React.FC<Props> = ({
       type="button"
       disabled={disabled}
     >
+      {icon && <Icon className={style.marginedIcon} name={icon} />}
       {children && <Typo type="span">{children}</Typo>}
-      {icon && <Icon className={children ? style.marginedIcon : style.normalIcon} name={icon} />}
     </button>
   );
 };

@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { LandingPage, WelcomePage, RoomPage, SignUpPage, LoginPage, HomePage, PageNotFound } from './pages';
 import { store } from './store';
 import './index.scss';
-import { AUTHENTICATE, JOIN_ROOM, REFRESH_TOKEN } from '@scrpoker/constants/apis';
+import { AUTHENTICATE, JOIN_ROOM, REFRESH_TOKEN, CHECK_ROOM } from '@scrpoker/constants/apis';
 import { getAuthHeader } from '@scrpoker/utils';
 import { GlobalRoomJiraDomain } from '@scrpoker/constants/objects';
 import { Actions } from '@scrpoker/store';
@@ -91,7 +91,17 @@ const App = () => {
     if (isTokenValid) {
       authenticate();
       if (currentPath.includes('/room') && !currentPath.includes('/room/join')) {
-        joinRoom();
+        fetch(CHECK_ROOM(window.location.pathname.slice(6)), {
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }).then((response) => {
+          if (response.status !== 200) {
+            window.location.replace('/home');
+          } else {
+            joinRoom();
+          }
+        });
       }
       const expiration = new Date(CookieReader.get('tokenExpiration') as string);
       if (expiration.getTime() - new Date().getTime() <= 300000) {

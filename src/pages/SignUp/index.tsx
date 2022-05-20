@@ -32,7 +32,7 @@ const SignUp: React.FC<Props> = ({ signUp, setIsTokenValid }) => {
       alert('Password and email cannot be empty or white space');
     } else if (password.length < 6) {
       alert('Password should be at least 6 characters');
-    } else if (userName.length > 20) {
+    } else if (userName.length > 16) {
       alert(`Username characters can't exceed 20 characters`);
     } else if (userName.trim() != '' && password && confirmPassword && email) {
       setIsLoading(true);

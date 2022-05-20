@@ -11,10 +11,10 @@ const getAuthHeader = (): string => {
         if(expirationDate > currentDate) {
             return `Bearer ${CookieReader.get('jwtToken')}`;
         } else {
-            var allCookies = document.cookie.split(';');
+            const allCookies = document.cookie.split(';');
             
-            for (var i = 0; i < allCookies.length; i++) {
-                document.cookie = allCookies[i] + "=;expires=" + new Date(0).toUTCString();
+            for (let i = 0; i < allCookies.length; i++) {
+                document.cookie = allCookies[i] + '=;expires=' + new Date(0).toUTCString();
             }
             
             return '';

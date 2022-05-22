@@ -1,10 +1,11 @@
 import CookieReader from 'js-cookie';
 
-const getAuthHeader = (): string => {
+const getAuthHeader = (): string | undefined => {
     const tokenExpiration = CookieReader.get('tokenExpiration');
-    const numberOfCookies = document.cookie.split(';');
+    const jwtToken = CookieReader.get('jwtToken');
+    const officialUser = CookieReader.get('officialUser');
 
-    if(tokenExpiration && numberOfCookies.length == 3) {
+    if(tokenExpiration && jwtToken && officialUser) {
         const expirationDate = new Date(tokenExpiration);
         const currentDate = new Date();
 

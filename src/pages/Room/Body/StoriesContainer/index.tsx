@@ -55,6 +55,8 @@ const StoriesContainer: React.FC<Props> = ({
 
   const [jiraStoryModalIsOpen, setJiraStoryModalIsOpen] = useState(false);
 
+  const [exportModalIsOpen, setExportModalIsOpen] = useState(false);
+
   const [jiraIssueId, setJiraIssueId] = useState('');
 
   const [jiraStories, setJiraStories] = useState<IJiraStory[] | undefined>(undefined);
@@ -80,6 +82,14 @@ const StoriesContainer: React.FC<Props> = ({
   };
   const closeManualStoryModal = () => {
     setManualStoryModalIsOpen(false);
+  };
+
+  const openExportModal = () => {
+    setExportModalIsOpen(true);
+  };
+
+  const closeExportModal = () => {
+    setExportModalIsOpen(false);
   };
 
   const requestOpenAddStoryModal = () => {
@@ -281,6 +291,33 @@ const StoriesContainer: React.FC<Props> = ({
           stories={jiraStories}
           className={style.jiraStoriesTable}
         />
+      </ReactModal>
+      <ReactModal
+        closeTimeoutMS={100}
+        onRequestClose={closeExportModal}
+        isOpen={exportModalIsOpen}
+        style={reactModalStyle}
+      >
+        <div className={style.title}>
+          <Typo type="h2">Export stories</Typo>
+          <Icon className={style.closeButton} size="2x" name="window-close" onClick={closeExportModal} />
+        </div>
+        <Button
+          className={style.longButton}
+          onClick={() => {
+            
+          }}
+        >
+          CSV
+        </Button>
+        <Button
+          className={style.longButton}
+          onClick={() => {
+            
+          }}
+        >
+          XLSX
+        </Button>
       </ReactModal>
       <div className={style.firstColumn}>
         <Typo type="h3">Stories</Typo>

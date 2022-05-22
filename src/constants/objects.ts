@@ -6,7 +6,7 @@ export const reactModalStyle = {
     bottom: 'auto',
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
-    borderRadius: '3px',
+    borderRadius: '6px',
     padding: '1rem',
   },
   overlay: {

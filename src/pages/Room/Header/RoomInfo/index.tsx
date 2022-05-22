@@ -38,7 +38,7 @@ const RoomInfo: React.FC<Props> = ({ data, className = '' }) => {
         <Button
           className={`${style.button} ${style.leaveButton}`}
           onClick={() => {
-            window.location.replace('/home');
+            history.push('/home');
           }}
           icon="sign-out-alt"
         >

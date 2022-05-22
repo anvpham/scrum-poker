@@ -1,6 +1,6 @@
 import CookieReader from 'js-cookie';
 
-const getAuthHeader = (): string | undefined => {
+const getAuthHeader = (): string => {
     const tokenExpiration = CookieReader.get('tokenExpiration');
     const jwtToken = CookieReader.get('jwtToken');
     const officialUser = CookieReader.get('officialUser');

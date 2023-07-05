@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using scrum_poker_server.Data;
-using scrum_poker_server.DTOs.Incoming;
+using scrum_poker_server.DTOs;
 using scrum_poker_server.Utils.Jwt;
 using System;
 using System.Security.Cryptography;

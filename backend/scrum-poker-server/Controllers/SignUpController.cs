@@ -2,13 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using scrum_poker_server.Data;
-using scrum_poker_server.DTOs.Incoming;
+using scrum_poker_server.DTOs;
 using scrum_poker_server.Models;
 using scrum_poker_server.Utils;
 using scrum_poker_server.Utils.Jwt;
 using scrum_poker_server.Utils.RoomUtils;
 using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;

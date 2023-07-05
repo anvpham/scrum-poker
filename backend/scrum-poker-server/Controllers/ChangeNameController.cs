@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
-using scrum_poker_server.DTOs.Incoming;
+using scrum_poker_server.DTOs;
 using scrum_poker_server.Utils.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;

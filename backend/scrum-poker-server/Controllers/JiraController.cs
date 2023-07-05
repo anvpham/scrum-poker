@@ -3,14 +3,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
-using scrum_poker_server.DTOs.Incoming;
+using scrum_poker_server.DTOs;
 using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using scrum_poker_server.Models;
-using scrum_poker_server.POCOs;
 using System.Net;
 using System.Linq;
 

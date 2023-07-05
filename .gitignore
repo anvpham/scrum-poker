@@ -8,3 +8,9 @@ backend/scrum-poker-server/obj
 backend/.vs
 backend/scrum-poker-server/Properties/
 *.user
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets

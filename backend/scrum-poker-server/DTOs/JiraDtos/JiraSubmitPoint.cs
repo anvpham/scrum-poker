@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace scrum_poker_server.DTOs.Incoming
+namespace scrum_poker_server.DTOs
 {
-    public class AddJiraStory
+    public class JiraSubmitPoint
     {
         public string IssueId { get; set; }
 
@@ -13,6 +13,6 @@ namespace scrum_poker_server.DTOs.Incoming
 
         public string JiraDomain { get; set; }
 
-        public int RoomId { get; set; }
+        public int Point { get; set; }
     }
 }

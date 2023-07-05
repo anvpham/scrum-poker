@@ -1,4 +1,4 @@
-﻿namespace scrum_poker_server.DTOs.Incoming
+﻿namespace scrum_poker_server.DTOs
 {
     public class LoginDTO
     {

@@ -1,4 +1,4 @@
-﻿namespace scrum_poker_server.POCOs
+﻿namespace scrum_poker_server.DTOs
 {
     public class JiraIssueResponse
     {

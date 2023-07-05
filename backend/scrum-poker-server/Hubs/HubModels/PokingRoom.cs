@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace scrum_poker_server.HubModels
 {
@@ -53,6 +54,44 @@ namespace scrum_poker_server.HubModels
         public User[] GetUsers()
         {
             return Users.ToArray();
+        }
+
+        public void UpdateUserStatus(int userId, string status, int point)
+        {
+            var user = Users.FirstOrDefault(u => u.Id == userId);
+            user.Status = status;
+            user.Point = point;
+
+            if (PointsFrequency.ContainsKey(point))
+            {
+                PointsFrequency[point]++;
+            }
+            else
+            {
+                PointsFrequency[point] = 1;
+            }
+        }
+
+        public int GetMostFrequentPoint()
+        {
+            var mostFrequent = PointsFrequency.Values.Max();
+
+            return PointsFrequency.FirstOrDefault(item => item.Value == mostFrequent).Key;
+        }
+
+        public List<User> SetStatusForAllUsers(string status)
+        {
+            Users.ForEach(u =>
+            {
+                u.Status = status;
+
+                if (status == "standBy")
+                {
+                    u.Point = -1;
+                }
+            });
+
+            return Users;
         }
     }
 }

@@ -13,7 +13,8 @@
     "resolveJsonModule": true,
     "paths": {
       "@scrpoker/*": ["src/*"]
-    }
+    },
+    "strictNullChecks": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

@@ -58,6 +58,16 @@
   width: 350px;
 }
 
+.noButton {
+  background-color: #D44333;
+  border: 1px solid #D44333;
+}
+
+.yesButton {
+  background-color: #3AA76D;
+  border: 1px solid #3AA76D;
+}
+
 .title {
   display: flex;
   justify-content: space-between;

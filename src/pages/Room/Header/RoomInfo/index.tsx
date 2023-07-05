@@ -12,9 +12,10 @@ interface Data {
 interface Props {
   data: Data;
   className?: string;
+  roomConnection: any;
 }
 
-const RoomInfo: React.FC<Props> = ({ data, className = '' }) => {
+const RoomInfo: React.FC<Props> = ({ data, roomConnection, className = '' }) => {
   const { roomName, description, roomCode, members } = data;
   const history = useHistory();
   return (
@@ -38,6 +39,7 @@ const RoomInfo: React.FC<Props> = ({ data, className = '' }) => {
         <Button
           className={`${style.button} ${style.leaveButton}`}
           onClick={() => {
+            roomConnection.send('RemoveFromChannel', roomCode);
             history.push('/home');
           }}
           icon="sign-out-alt"

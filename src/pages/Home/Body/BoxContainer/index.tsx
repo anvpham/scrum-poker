@@ -115,6 +115,7 @@ const BoxContainer: React.FC<Props> = ({
   };
 
   const join = async () => {
+    setIsLoading(true);
     const roomStatus: IRoomStatus = await fetch(CHECK_ROOM(roomCode), {
       headers: {
         Authorization: getAuthHeader(),
@@ -140,9 +141,11 @@ const BoxContainer: React.FC<Props> = ({
     });
 
     if (roomStatus.isAvailable) {
+      setIsLoading(false);
       await joinRoom(roomCode);
       history.push('/room/' + roomCode);
     } else {
+      setIsLoading(false);
       alert(roomStatus.errorMessage);
     }
   };
@@ -254,13 +257,9 @@ const BoxContainer: React.FC<Props> = ({
           onTextChange={handleRoomCodeChange}
         />
         <div className={style.submit}>
-          {isLoading ? (
-            <Button square={true} className={style.loadingBUtton} icon="fas fa-circle-notch fa-spin" />
-          ) : (
-            <Button square={true} onClick={join}>
-              Submit
+            <Button className={style.loadingButton} square={true} onClick={isLoading ? undefined : join} icon={isLoading ? 'fas fa-circle-notch fa-spin' : undefined}>
+              {isLoading ? '' : 'Join'}
             </Button>
-          )}
         </div>
       </ReactModal>
       <ReactModal

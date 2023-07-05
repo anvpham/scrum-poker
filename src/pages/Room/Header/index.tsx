@@ -132,7 +132,7 @@ const Header: React.FC<Props> = ({
 
   return (
     <div className={`${style.header} ${className}`}>
-      <RoomInfo data={data} className={style.roomInfo} />
+      <RoomInfo roomConnection={roomConnection} data={data} className={style.roomInfo} />
       <UsersContainer users={users} />
     </div>
   );

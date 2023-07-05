@@ -89,7 +89,7 @@ namespace scrum_poker_server
          services.AddDbContext<AppDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
          services.AddSingleton<RoomService>();
          services.AddSingleton<JwtTokenGenerator>();
-         services.AddSignalR();
+         services.AddSignalR().AddAzureSignalR("Endpoint=https://scrumpoker-websocket.service.signalr.net;AccessKey=+IgiPw+ut99YYOxPVWH0MiN3DSzFBzH37MNwWEtq8qI=;Version=1.0;");
       }
 
       public void Configure(IApplicationBuilder app)

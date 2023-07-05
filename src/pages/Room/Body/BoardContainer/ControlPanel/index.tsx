@@ -126,7 +126,7 @@ const ControlPanel: React.FC<Props> = ({
       point: currentStoryPoint,
       isFinalPoint: true,
     };
-    fetch(SUBMIT_POINT, {
+    await fetch(SUBMIT_POINT, {
       method: 'POST',
       body: JSON.stringify(submitPointData),
       headers: {

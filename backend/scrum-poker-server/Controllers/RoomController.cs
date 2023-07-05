@@ -147,7 +147,7 @@ namespace scrum_poker_server.Controllers
             {
                 return Ok();
             }
-            else if (_roomService.FindRoom(roomCode).Users.Count >= 12)
+            else if (_roomService.FindRoom(roomCode).Users.Count >= 6)
             {
                 return StatusCode(403);
             }

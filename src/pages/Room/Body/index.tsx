@@ -147,6 +147,10 @@ const Body: React.FC<Props> = ({
     updateCurrentStoryPoint(point);
   };
 
+  const storiesImportedCallback = () => {
+    location.reload();
+  };
+
   useEffect(() => {
     roomConnection.off('storyAdded');
     roomConnection.on('storyAdded', storyAddedCallback);
@@ -171,6 +175,11 @@ const Body: React.FC<Props> = ({
     roomConnection.off('currentStoryPointChanged');
     roomConnection.on('currentStoryPointChanged', currentStoryPointChangedCallback);
   }, [currentStoryPointChangedCallback]);
+
+  useEffect(() => {
+    roomConnection.off('onStoriesImported');
+    roomConnection.on('onStoriesImported', storiesImportedCallback);
+  }, [storiesImportedCallback]);
 
   useEffect(() => {
     getStories();

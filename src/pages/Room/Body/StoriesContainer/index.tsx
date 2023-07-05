@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ReactModal from 'react-modal';
 import style from './style.module.scss';
 import { Typo, Icon, Input, Button } from '@scrpoker/components';
@@ -47,6 +47,9 @@ const StoriesContainer: React.FC<Props> = ({
   role,
   jiraIssueIds,
 }) => {
+
+  const inputFile = useRef(null);
+
   const [fetching, setFetching] = useState(false);
 
   const [manualStoryModalIsOpen, setManualStoryModalIsOpen] = useState(false);
@@ -57,9 +60,15 @@ const StoriesContainer: React.FC<Props> = ({
 
   const [exportModalIsOpen, setExportModalIsOpen] = useState(false);
 
+  const [importModalIsOpen, setImportModalIsOpen] = useState(false);
+
   const [jiraIssueId, setJiraIssueId] = useState('');
 
   const [jiraStories, setJiraStories] = useState<IJiraStory[] | undefined>(undefined);
+
+  const [downloadingModalIsOpen, setDownloadingModalIsOpen] = useState(false);
+
+  const [isImporting, setIsImporting] = useState(false);
 
   const openJiraStoryModal = () => {
     setJiraStoryModalIsOpen(true);
@@ -90,6 +99,22 @@ const StoriesContainer: React.FC<Props> = ({
 
   const closeExportModal = () => {
     setExportModalIsOpen(false);
+  };
+
+  const openImportModal = () => {
+    setImportModalIsOpen(true);
+  };
+
+  const closeImportModal = () => {
+    setImportModalIsOpen(false);
+  };
+
+  const openDownloadingModal = () => {
+    setDownloadingModalIsOpen(true);
+  };
+
+  const closeDownloadingModal = () => {
+    setDownloadingModalIsOpen(false);
   };
 
   const requestOpenAddStoryModal = () => {
@@ -145,6 +170,22 @@ const StoriesContainer: React.FC<Props> = ({
     } finally {
       setFetching(false);
     }
+  };
+
+  const handleFileUpload = async (e: any) => {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('uploadfile', file);
+
+      setIsImporting(true);
+      fetch(`https://22f9-14-187-202-159.ap.ngrok.io/api/import?RoomCode=${roomCode}`, {
+        method: 'POST',
+        body: formData,
+      }).then(response => {
+        setIsImporting(false);
+        closeImportModal();
+        roomConnection.send('Reload', roomCode);
+      })
   };
 
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,6 +273,16 @@ const StoriesContainer: React.FC<Props> = ({
       </ReactModal>
       <ReactModal
         closeTimeoutMS={100}
+        onRequestClose={closeDownloadingModal}
+        isOpen={downloadingModalIsOpen}
+        style={reactModalStyle}
+      >
+        <div className={style.lessMarginTitle}>
+          <Typo type="h3">Your file is being downloaded...</Typo>
+        </div>
+      </ReactModal>
+      <ReactModal
+        closeTimeoutMS={100}
         onRequestClose={closeNavigateModal}
         isOpen={navigateModalIsOpen}
         style={reactModalStyle}
@@ -292,6 +343,7 @@ const StoriesContainer: React.FC<Props> = ({
           className={style.jiraStoriesTable}
         />
       </ReactModal>
+      <input style={{ display: 'none' }} type="file" ref={inputFile} onChange={handleFileUpload} />
       <ReactModal
         closeTimeoutMS={100}
         onRequestClose={closeExportModal}
@@ -299,24 +351,60 @@ const StoriesContainer: React.FC<Props> = ({
         style={reactModalStyle}
       >
         <div className={style.title}>
-          <Typo type="h2">Export stories</Typo>
+          <Typo type="h2">Are you sure?</Typo>
           <Icon className={style.closeButton} size="2x" name="window-close" onClick={closeExportModal} />
         </div>
         <Button
-          className={style.longButton}
-          onClick={() => {
-            
+          className={`${style.longButton} ${style.yesButton}`}
+          onClick={async () => {
+            fetch(`https://22f9-14-187-202-159.ap.ngrok.io/api/export?RoomCode=${roomCode}`)
+            .then(response => response.blob())
+            .then(blob => {
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'filename.xlsx';
+                document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
+                a.click();
+                a.remove();
+                closeDownloadingModal();
+              });
+
+            closeExportModal();
+            openDownloadingModal();
           }}
         >
-          CSV
+          YES
         </Button>
         <Button
-          className={style.longButton}
+          className={`${style.longButton} ${style.noButton}`}
           onClick={() => {
-            
+            closeExportModal();
           }}
         >
-          XLSX
+          NO
+        </Button>
+      </ReactModal>
+      <ReactModal
+        closeTimeoutMS={100}
+        onRequestClose={closeImportModal}
+        isOpen={importModalIsOpen}
+        style={reactModalStyle}
+      >
+        <div className={style.title}>
+          <Typo type="h2">Import stories</Typo>
+          <Icon className={style.closeButton} size="2x" name="window-close" onClick={closeImportModal} />
+        </div>
+        <Button
+          className={style.longButton}
+          onClick={isImporting ? undefined
+              : () => {
+                inputFile.current.click();
+              }
+          }
+          icon={isImporting ? 'fas fa-circle-notch fa-spin' : undefined}
+        >
+          {isImporting ? '' : 'Choose a file'}
         </Button>
       </ReactModal>
       <div className={style.firstColumn}>
@@ -335,14 +423,18 @@ const StoriesContainer: React.FC<Props> = ({
       <div className={style.buttonContainer}>
         <Button
           className={`${style.button} ${style.importButton}`}
-          onClick={() => {}}
+          onClick={() => {
+            openImportModal();
+          }}
           icon="upload"
         >
           Import
         </Button>
         <Button
           className={`${style.button} ${style.exportButton}`}
-          onClick={() => {}}
+          onClick={() => {
+            openExportModal();
+          }}
           icon="download"
         >
           Export

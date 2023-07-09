@@ -1,14 +1,14 @@
-using scrum_poker_server.HubModels;
+﻿using scrum_poker_server.HubModels;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace scrum_poker_server.HubServices
+namespace scrum_poker_server.Hubs
 {
-    public class RoomService
+    public class RoomHubManager
     {
         public List<PokingRoom> Rooms { get; set; }
 
-        public RoomService()
+        public RoomHubManager()
         {
             Rooms = new List<PokingRoom>();
         }

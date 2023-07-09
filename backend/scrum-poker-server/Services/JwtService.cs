@@ -1,28 +1,25 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using scrum_poker_server.Models;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace scrum_poker_server.Utils.Jwt
+namespace scrum_poker_server.Services
 {
-    public class UserData
+    public interface IJwtService
     {
-        public string Email { get; set; }
-
-        public int UserId { get; set; }
-
-        public string Name { get; set; }
+        public string GenerateToken(User user);
     }
 
-    public class JwtTokenGenerator
+    public class JwtService : IJwtService
     {
         private IConfiguration _configuration { get; set; }
         private SigningCredentials Credentials { get; set; }
         private JwtSecurityTokenHandler JwtTokenHandler { get; set; }
 
-        public JwtTokenGenerator(IConfiguration configuration)
+        public JwtService(IConfiguration configuration)
         {
             _configuration = configuration;
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]));
@@ -30,13 +27,13 @@ namespace scrum_poker_server.Utils.Jwt
             JwtTokenHandler = new JwtSecurityTokenHandler();
         }
 
-        public string GenerateToken(UserData userData)
+        public string GenerateToken(User user)
         {
-            var claims = new ClaimsIdentity(new[] { new Claim("UserId", userData.UserId.ToString()), new Claim(ClaimTypes.Name, userData.Name) });
-            bool isEmailNull = String.IsNullOrEmpty(userData.Email);
+            var claims = new ClaimsIdentity(new[] { new Claim("UserId", user.Id.ToString()), new Claim(ClaimTypes.Name, user.Name) });
+            bool isEmailNull = String.IsNullOrEmpty(user.Email);
             if (!isEmailNull)
             {
-                claims.AddClaim(new Claim(ClaimTypes.Email, userData.Email));
+                claims.AddClaim(new Claim(ClaimTypes.Email, user.Email));
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor

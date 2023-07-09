@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using scrum_poker_server.Data;
 using scrum_poker_server.DTOs;
 using scrum_poker_server.Models;
+using scrum_poker_server.Services;
 using scrum_poker_server.Utils;
 using scrum_poker_server.Utils.Jwt;
-using scrum_poker_server.Utils.RoomUtils;
 using System;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,17 +16,18 @@ namespace scrum_poker_server.Controllers
     [Route("api/signup")]
     public class SignUpController : ControllerBase
     {
-        public AppDbContext _dbContext { get; set; }
+        private readonly IJwtService _jwtService;
+        private readonly IRoomService _roomService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public IConfiguration _configuration { get; set; }
-
-        public JwtTokenGenerator JwtTokenGenerator { get; set; }
-
-        public SignUpController(AppDbContext dbContext, IConfiguration configuration, JwtTokenGenerator jwtTokenGenerator)
+        public SignUpController(
+            IUnitOfWork unitOfWork,
+            IJwtService jwtService,
+            IRoomService roomService)
         {
-            _dbContext = dbContext;
-            _configuration = configuration;
-            JwtTokenGenerator = jwtTokenGenerator;
+            _unitOfWork = unitOfWork;
+            _jwtService = jwtService;
+            _roomService = roomService;
         }
 
         [Consumes("application/json")]
@@ -42,14 +41,15 @@ namespace scrum_poker_server.Controllers
                     Name = data.UserName
                 };
 
-                await _dbContext.Users.AddAsync(anonymousUser);
-                await _dbContext.SaveChangesAsync();
+                _unitOfWork.UserRepository.Add(anonymousUser);
+                await _unitOfWork.SaveChangesAsync();
 
-                return Ok(new { jwtToken = JwtTokenGenerator.GenerateToken(new UserData { UserId = anonymousUser.Id, Name = data.UserName }), expiration = 131399, name = data.UserName, userId = anonymousUser.Id });
+                return Ok(new { jwtToken = _jwtService.GenerateToken(anonymousUser), expiration = 131399, name = data.UserName, userId = anonymousUser.Id });
             }
 
-            bool isEmailExisted = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == data.Email) != null;
-            if (isEmailExisted) return StatusCode(409, new { error = "The email is already existed" });
+            bool isEmailExisted = await _unitOfWork.UserRepository.GetByEmailAsync(data.Email) != null;
+            if (isEmailExisted)
+                return StatusCode(409, new { error = "The email is already existed" });
 
             // Compute hash of the password
             var bytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(data.Password));
@@ -63,7 +63,7 @@ namespace scrum_poker_server.Controllers
             };
 
             // Create a room for user
-            var roomCode = await new RoomCodeGenerator(_dbContext).Generate();
+            var roomCode = await _roomService.GenerateRoomCodeAsync();
 
             var room = new Room
             {
@@ -73,16 +73,16 @@ namespace scrum_poker_server.Controllers
                 Description = "Change room description here"
             };
 
-            await _dbContext.UserRooms.AddAsync(new UserRoom
+            _unitOfWork.UserRoomRepository.Add(new UserRoom
             {
                 User = user,
                 Room = room,
                 Role = Role.host
             });
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new { jwtToken = JwtTokenGenerator.GenerateToken(new UserData { Email = data.Email, UserId = user.Id, Name = data.UserName }), email = data.Email, expiration = 29, name = data.UserName, userId = user.Id, userRoomCode = roomCode });
+            return Ok(new { jwtToken = _jwtService.GenerateToken(user), email = data.Email, expiration = 29, name = data.UserName, userId = user.Id, userRoomCode = roomCode });
         }
     }
 }

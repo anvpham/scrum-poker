@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using scrum_poker_server.HubModels;
-using scrum_poker_server.HubServices;
 using scrum_poker_server.Utils;
 using System.Linq;
 using System.Security.Claims;
@@ -10,27 +9,27 @@ using System.Threading.Tasks;
 namespace scrum_poker_server.Hubs
 {
     [Authorize(Policy = "OfficialUsers")]
-    public class Room : Hub
+    public class RoomHub : Hub
     {
-        public RoomService _roomService { get; set; }
+        private readonly RoomHubManager _roomHubManager;
 
-        public Room(RoomService roomService)
+        public RoomHub(RoomHubManager roomHubManager)
         {
-            _roomService = roomService;
+            _roomHubManager = roomHubManager;
         }
 
         public async Task Combine(string roomCode, int role)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
 
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             var userName = Context.User.FindFirst(ClaimTypes.Name).Value;
             var userId = int.Parse(Context.User.FindFirst("UserId").Value);
 
             if (room == null)
             {
                 room = new PokingRoom(roomCode, new User(userName, userId, "standBy", (Role)role, 0), "waiting");
-                _roomService.Add(room);
+                _roomHubManager.Add(room);
                 var users = room.GetUsers();
                 await Clients.Caller.SendAsync("joinRoom", new { users, roomState = room.State, currentStoryPoint = room.CurrentStoryPoint });
             }
@@ -47,7 +46,7 @@ namespace scrum_poker_server.Hubs
         public async Task ChangeUserStatus(string roomCode, string status, int point)
         {
             var userId = int.Parse(Context.User.FindFirst("UserId").Value);
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
 
             room.UpdateUserStatus(userId, status, point);
 
@@ -56,7 +55,7 @@ namespace scrum_poker_server.Hubs
 
         public async Task ChangeRoomState(string roomCode, string roomState)
         {
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             room.State = roomState;
 
             if (roomState == "revealed")
@@ -84,14 +83,14 @@ namespace scrum_poker_server.Hubs
         public async Task AddStory(string roomCode, int id)
         {
             await Clients.Group(roomCode).SendAsync("storyAdded", new { id });
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             room.AddStory(id);
         }
 
         public async Task DeleteStory(string roomCode, int id)
         {
             await Clients.Group(roomCode).SendAsync("storyDeleted", new { id });
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             room.RemoveStory(id);
         }
 
@@ -103,14 +102,14 @@ namespace scrum_poker_server.Hubs
         public async Task ChangeCurrentStory(string roomCode, int id)
         {
             await Clients.Group(roomCode).SendAsync("currentStoryChanged", new { id });
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             room.CurrentStoryId = id;
         }
 
         public async Task ChangeCurrentStoryPoint(string roomCode, int point)
         {
             await Clients.Group(roomCode).SendAsync("currentStoryPointChanged", new { point });
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             room.CurrentStoryPoint = point;
         }
 
@@ -122,7 +121,7 @@ namespace scrum_poker_server.Hubs
         public async Task RemoveFromChannel(string roomCode)
         {
             var userId = int.Parse(Context.User.FindFirst("UserId").Value);
-            var room = _roomService.FindRoom(roomCode);
+            var room = _roomHubManager.FindRoom(roomCode);
             if(room.GetUsers().FirstOrDefault(u => u.Id == userId) == null)
             {
                 return;

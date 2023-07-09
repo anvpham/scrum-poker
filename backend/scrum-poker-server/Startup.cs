@@ -11,7 +11,7 @@ using Microsoft.Extensions.Http;
 using Microsoft.IdentityModel.Tokens;
 using scrum_poker_server.Data;
 using scrum_poker_server.Hubs;
-using scrum_poker_server.HubServices;
+using scrum_poker_server.Services;
 using scrum_poker_server.Utils.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -87,9 +87,11 @@ namespace scrum_poker_server
          services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
          services.AddControllers();
          services.AddDbContext<AppDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
-         services.AddSingleton<RoomService>();
-         services.AddSingleton<JwtTokenGenerator>();
-         services.AddSignalR().AddAzureSignalR("Endpoint=https://scrumpoker-websocket.service.signalr.net;AccessKey=+IgiPw+ut99YYOxPVWH0MiN3DSzFBzH37MNwWEtq8qI=;Version=1.0;");
+         services.AddSingleton<RoomHubManager>();
+         services.AddScoped<IUnitOfWork, UnitOfWork>();
+         services.AddScoped<IRoomService, RoomService>();
+         services.AddScoped<IJwtService, JwtService>();
+         services.AddSignalR();
       }
 
       public void Configure(IApplicationBuilder app)
@@ -114,7 +116,7 @@ namespace scrum_poker_server
                     await context.Response.WriteAsync("Web APIs of scrum poker");
                  });
 
-            endpoints.MapHub<Room>("/room");
+            endpoints.MapHub<RoomHub>("/room");
 
             endpoints.MapControllers();
          });

@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
 using scrum_poker_server.DTOs;
-using scrum_poker_server.HubServices;
+using scrum_poker_server.Hubs;
 using scrum_poker_server.Models;
+using scrum_poker_server.Services;
 using scrum_poker_server.Utils;
-using scrum_poker_server.Utils.RoomUtils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -18,13 +18,15 @@ namespace scrum_poker_server.Controllers
     [Route("api/rooms")]
     public class RoomController : ControllerBase
     {
-        public AppDbContext _dbContext { get; set; }
+        private readonly AppDbContext _dbContext;
+        private readonly RoomHubManager _roomHubManager;
+        private readonly IRoomService _roomService;
 
-        public RoomService _roomService { get; set; }
-
-        public RoomController(AppDbContext dbContext, RoomService roomService)
+        public RoomController(AppDbContext dbContext, RoomHubManager roomHubManager,
+            IRoomService roomService)
         {
             _dbContext = dbContext;
+            _roomHubManager = roomHubManager;
             _roomService = roomService;
         }
 
@@ -33,9 +35,10 @@ namespace scrum_poker_server.Controllers
         [HttpPost, Route("create")]
         public async Task<IActionResult> Create([FromBody] CreateRoomDTO data)
         {
-            var roomCode = await new RoomCodeGenerator(_dbContext).Generate();
+            var roomCode = await _roomService.GenerateRoomCodeAsync();
 
-            var user = _dbContext.Users.FirstOrDefault(u => u.Email == HttpContext.User.FindFirst(ClaimTypes.Email).Value);
+            var user = _dbContext.Users
+                .FirstOrDefault(u => u.Email == HttpContext.User.FindFirst(ClaimTypes.Email).Value);
 
             var room = new Room
             {
@@ -61,15 +64,24 @@ namespace scrum_poker_server.Controllers
         [HttpGet, Route("{id}/stories")]
         public async Task<IActionResult> GetStories(int id)
         {
-            var room = await _dbContext.Rooms.Include(r => r.Stories).ThenInclude(s => s.SubmittedPointByUsers).ThenInclude(s => s.User).AsSplitQuery().FirstOrDefaultAsync(r => r.Id == id);
-            if (room == null) return NotFound(new { error = "The room doesn't exist" });
+            var room = await _dbContext.Rooms
+                .Include(r => r.Stories)
+                .ThenInclude(s => s.SubmittedPointByUsers)
+                .ThenInclude(s => s.User)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (room == null)
+                return NotFound(new { error = "The room doesn't exist" });
 
             var userRoom = await _dbContext.UserRooms.
                 FirstOrDefaultAsync(ur => ur.RoomId == room.Id && ur.UserID.ToString() == HttpContext.User.FindFirst("UserId").Value);
 
-            if (userRoom == null) return Forbid();
+            if (userRoom == null)
+                return Forbid();
 
             var stories = new List<StoryDTO>();
+
             room.Stories.ToList().ForEach(s =>
             {
                 var submittedPointByUsers = new List<DTOs.SubmittedPointByUser>();
@@ -116,7 +128,8 @@ namespace scrum_poker_server.Controllers
 
             var userRoom = await _dbContext.UserRooms.FirstOrDefaultAsync(ur => ur.Room.Code == data.RoomCode && ur.User.Id.ToString() == userId);
 
-            if (userRoom != null) return Ok(new { roomId = room.Id, roomCode = data.RoomCode, roomName = room.Name, description = room.Description, role = userRoom.Role, jiraDomain = room.JiraDomain });
+            if (userRoom != null)
+                return Ok(new { roomId = room.Id, roomCode = data.RoomCode, roomName = room.Name, description = room.Description, role = userRoom.Role, jiraDomain = room.JiraDomain });
 
             await _dbContext.UserRooms.AddAsync(new UserRoom
             {
@@ -143,15 +156,15 @@ namespace scrum_poker_server.Controllers
             {
                 return StatusCode(404);
             }
-            else if (_roomService.FindRoom(roomCode) == null)
+            else if (_roomHubManager.FindRoom(roomCode) == null)
             {
                 return Ok();
             }
-            else if (_roomService.FindRoom(roomCode).Users.Count >= 6)
+            else if (_roomHubManager.FindRoom(roomCode).Users.Count >= 6)
             {
                 return StatusCode(403);
             }
-            else if (_roomService.FindRoom(roomCode).Users.Find(u => u.Id == userId) != null)
+            else if (_roomHubManager.FindRoom(roomCode).Users.Find(u => u.Id == userId) != null)
             {
                 return StatusCode(409);
             }

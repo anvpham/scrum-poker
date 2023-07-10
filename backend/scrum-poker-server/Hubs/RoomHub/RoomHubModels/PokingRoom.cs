@@ -15,22 +15,22 @@ namespace scrum_poker_server.HubModels
 
         public string State { get; set; }
 
-        public List<User> Users { get; set; }
+        public List<RoomHubUser> Users { get; set; }
 
         public List<int> StoryIds { get; set; }
 
-        public PokingRoom(string roomCode, User host, string roomState)
+        public PokingRoom(string roomCode, RoomHubUser host, string roomState)
         {
             RoomCode = roomCode;
             State = roomState;
             CurrentStoryPoint = -1;
-            Users = new List<User>();
+            Users = new List<RoomHubUser>();
             StoryIds = new List<int>();
             PointsFrequency = new Dictionary<int, int>();
             Users.Add(host);
         }
 
-        public void AddUser(User user)
+        public void AddUser(RoomHubUser user)
         {
             Users.Add(user);
         }
@@ -51,7 +51,7 @@ namespace scrum_poker_server.HubModels
             Users.RemoveAt(Users.IndexOf(user));
         }
 
-        public User[] GetUsers()
+        public RoomHubUser[] GetUsers()
         {
             return Users.ToArray();
         }
@@ -79,7 +79,7 @@ namespace scrum_poker_server.HubModels
             return PointsFrequency.FirstOrDefault(item => item.Value == mostFrequent).Key;
         }
 
-        public List<User> SetStatusForAllUsers(string status)
+        public List<RoomHubUser> SetStatusForAllUsers(string status)
         {
             Users.ForEach(u =>
             {

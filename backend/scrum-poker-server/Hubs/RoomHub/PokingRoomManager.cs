@@ -4,11 +4,11 @@ using System.Linq;
 
 namespace scrum_poker_server.Hubs
 {
-    public class RoomHubManager
+    public class PokingRoomManager
     {
         public List<PokingRoom> Rooms { get; set; }
 
-        public RoomHubManager()
+        public PokingRoomManager()
         {
             Rooms = new List<PokingRoom>();
         }

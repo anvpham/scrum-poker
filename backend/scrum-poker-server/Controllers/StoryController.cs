@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
 using scrum_poker_server.DTOs;
 using scrum_poker_server.Models;
-using scrum_poker_server.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +12,7 @@ using System.Threading.Tasks;
 namespace scrum_poker_server.Controllers
 {
     [ApiController]
-    [Route("api/stories")]
+    [Route("api/story"), Consumes("application/json")]
     public class StoryController : ControllerBase
     {
         public AppDbContext _dbContext { get; set; }
@@ -52,7 +51,6 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "OfficialUsers")]
-        [Consumes("application/json")]
         [HttpPost, Route("add")]
         public async Task<IActionResult> Add([FromBody] AddStoryDTO data)
         {
@@ -93,7 +91,7 @@ namespace scrum_poker_server.Controllers
             return StatusCode(201, new { id = story.Id });
         }
 
-        [HttpDelete, Route("delete"), Consumes("application/json"), Authorize(Policy = "OfficialUsers")]
+        [HttpDelete, Route("delete"), Authorize(Policy = "OfficialUsers")]
         public async Task<IActionResult> Delete([FromBody] DeleteStory data)
         {
             if (data.StoryId == 0)
@@ -117,7 +115,6 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "AllUsers")]
-        [Consumes("application/json")]
         [HttpPost, Route("submitpoint")]
         public async Task<IActionResult> SubmitPoint([FromBody] SubmitPointDTO data)
         {
@@ -158,7 +155,6 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "OfficialUsers")]
-        [Consumes("application/json")]
         [HttpPost, Route("assign")]
         public async Task<IActionResult> Assign([FromBody] AssignStoryDTO data)
         {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using scrum_poker_server.HubModels;
-using scrum_poker_server.Utils;
+using scrum_poker_server.Models;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -11,9 +11,9 @@ namespace scrum_poker_server.Hubs
     [Authorize(Policy = "OfficialUsers")]
     public class RoomHub : Hub
     {
-        private readonly RoomHubManager _roomHubManager;
+        private readonly PokingRoomManager _roomHubManager;
 
-        public RoomHub(RoomHubManager roomHubManager)
+        public RoomHub(PokingRoomManager roomHubManager)
         {
             _roomHubManager = roomHubManager;
         }
@@ -28,14 +28,14 @@ namespace scrum_poker_server.Hubs
 
             if (room == null)
             {
-                room = new PokingRoom(roomCode, new User(userName, userId, "standBy", (Role)role, 0), "waiting");
+                room = new PokingRoom(roomCode, new RoomHubUser(userName, userId, "standBy", (Role)role, 0), "waiting");
                 _roomHubManager.Add(room);
                 var users = room.GetUsers();
                 await Clients.Caller.SendAsync("joinRoom", new { users, roomState = room.State, currentStoryPoint = room.CurrentStoryPoint });
             }
             else
             {
-                room.AddUser(new User(userName, int.Parse(Context.User.FindFirst("UserId").Value), "standBy", (Role)role, 0));
+                room.AddUser(new RoomHubUser(userName, int.Parse(Context.User.FindFirst("UserId").Value), "standBy", (Role)role, 0));
                 var users = room.GetUsers();
                 await Clients.GroupExcept(roomCode, Context.ConnectionId).SendAsync("newUserConnected", new { name = userName, id = userId, status = "standBy", point = 0, role });
                 await Clients.Caller.SendAsync("joinRoom", new { users, roomState = room.State, currentStoryPoint = room.CurrentStoryPoint });

@@ -6,7 +6,6 @@ using scrum_poker_server.DTOs;
 using scrum_poker_server.Hubs;
 using scrum_poker_server.Models;
 using scrum_poker_server.Services;
-using scrum_poker_server.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -15,23 +14,22 @@ using System.Threading.Tasks;
 namespace scrum_poker_server.Controllers
 {
     [ApiController]
-    [Route("api/rooms")]
+    [Route("api/room"), Consumes("application/json")]
     public class RoomController : ControllerBase
     {
         private readonly AppDbContext _dbContext;
-        private readonly RoomHubManager _roomHubManager;
+        private readonly PokingRoomManager _pokingRoomManager;
         private readonly IRoomService _roomService;
 
-        public RoomController(AppDbContext dbContext, RoomHubManager roomHubManager,
+        public RoomController(AppDbContext dbContext, PokingRoomManager pokingRoomManager,
             IRoomService roomService)
         {
             _dbContext = dbContext;
-            _roomHubManager = roomHubManager;
+            _pokingRoomManager = pokingRoomManager;
             _roomService = roomService;
         }
 
         [Authorize(Policy = "OfficialUsers")]
-        [Consumes("application/json")]
         [HttpPost, Route("create")]
         public async Task<IActionResult> Create([FromBody] CreateRoomDTO data)
         {
@@ -117,7 +115,6 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "AllUsers")]
-        [Consumes("application/json")]
         [HttpPost, Route("join")]
         public async Task<IActionResult> Join([FromBody] JoinRoomDTO data)
         {
@@ -145,7 +142,7 @@ namespace scrum_poker_server.Controllers
 
         // This API is used to check the availability of a room (valid room code, full people)
         [Authorize(Policy = "OfficialUsers")]
-        [HttpGet, Route("checkroom/{roomCode}")]
+        [HttpGet, Route("check/{roomCode}")]
         public async Task<IActionResult> CheckRoom(string roomCode)
         {
             var room = await _dbContext.Rooms.FirstOrDefaultAsync(r => r.Code == roomCode);
@@ -156,15 +153,15 @@ namespace scrum_poker_server.Controllers
             {
                 return StatusCode(404);
             }
-            else if (_roomHubManager.FindRoom(roomCode) == null)
+            else if (_pokingRoomManager.FindRoom(roomCode) == null)
             {
                 return Ok();
             }
-            else if (_roomHubManager.FindRoom(roomCode).Users.Count >= 6)
+            else if (_pokingRoomManager.FindRoom(roomCode).Users.Count >= 6)
             {
                 return StatusCode(403);
             }
-            else if (_roomHubManager.FindRoom(roomCode).Users.Find(u => u.Id == userId) != null)
+            else if (_pokingRoomManager.FindRoom(roomCode).Users.Find(u => u.Id == userId) != null)
             {
                 return StatusCode(409);
             }

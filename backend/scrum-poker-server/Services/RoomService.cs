@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using scrum_poker_server.Data;
+﻿using scrum_poker_server.Data.Repositories;
 using scrum_poker_server.Models;
 using System;
 using System.Threading.Tasks;
@@ -13,11 +12,11 @@ namespace scrum_poker_server.Services
 
     public class RoomService : IRoomService
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IRoomRepository _roomRepository;
 
-        public RoomService(AppDbContext dbContext)
+        public RoomService(IRoomRepository roomRepository)
         {
-            _dbContext = dbContext;
+            _roomRepository = roomRepository;
         }
 
         public async Task<string> GenerateRoomCodeAsync()
@@ -36,7 +35,7 @@ namespace scrum_poker_server.Services
 
                 roomCode = prefix + randomResult;
 
-                room = await _dbContext.Rooms.FirstOrDefaultAsync(r => r.Code == roomCode);
+                room = await _roomRepository.GetByRoomCodeAsync(roomCode);
 
                 if (room == null) isRoomExisted = false;
             }

@@ -1,5 +1,4 @@
-﻿using scrum_poker_server.Utils;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace scrum_poker_server.Models
 {
@@ -16,5 +15,11 @@ namespace scrum_poker_server.Models
         public Room Room { get; set; }
 
         public Role Role { get; set; }
+    }
+
+    public enum Role
+    {
+        host,
+        player
     }
 }

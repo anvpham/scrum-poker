@@ -90,6 +90,7 @@ namespace scrum_poker_server
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddTransient<IRoomService, RoomService>();
             services.AddTransient<IJwtService, JwtService>();
+            services.AddTransient<IJiraService, JiraService>();
             services.AddSignalR();
         }
 

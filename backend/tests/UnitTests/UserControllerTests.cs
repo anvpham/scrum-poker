@@ -9,7 +9,7 @@ using Xunit;
 
 namespace UnitTests
 {
-    public class SignUpControllerTests
+    public class UserControllerTests
     {
         [Fact]
         public async Task Sign_Up_Test()
@@ -20,7 +20,6 @@ namespace UnitTests
                 .Setup(x => x.GenerateRoomCodeAsync())
                 .ReturnsAsync("randomCode");
 
-            var dbContextMock = new Mock<AppD>
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using scrum_poker_server.HubModels;
-using scrum_poker_server.Utils;
+using scrum_poker_server.Models;
 using Xunit;
 
 namespace UnitTests
@@ -10,8 +10,8 @@ namespace UnitTests
         public void Add_User_List_Must_Contain_User()
         {
             // Arrange
-            var user1 = new User("Test", 1, "ready", Role.host, 3);
-            var user2 = new User("Test", 2, "ready", Role.player, 3);
+            var user1 = new RoomHubUser("Test", 1, "ready", Role.host, 3);
+            var user2 = new RoomHubUser("Test", 2, "ready", Role.player, 3);
             var pokingRoom = new PokingRoom("123", user1, "waiting");
 
             // Act
@@ -30,7 +30,7 @@ namespace UnitTests
         public void Add_Story_List_Must_Contain_Story()
         {
             // Arrange
-            var user1 = new User("Test", 1, "ready", Role.host, 3);
+            var user1 = new RoomHubUser("Test", 1, "ready", Role.host, 3);
 
             int storyId = 1;
 
@@ -47,7 +47,7 @@ namespace UnitTests
         public void Remove_Story_List_Must_Not_Contain_Story()
         {
             // Arrange
-            var user1 = new User("Test", 1, "ready", Role.host, 3);
+            var user1 = new RoomHubUser("Test", 1, "ready", Role.host, 3);
 
             int storyId = 1;
 

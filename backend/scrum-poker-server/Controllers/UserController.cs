@@ -6,7 +6,6 @@ using scrum_poker_server.DTOs;
 using scrum_poker_server.Models;
 using scrum_poker_server.Services;
 using System;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,19 +17,19 @@ namespace scrum_poker_server.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IJiraService _jiraService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJwtService _jwtService;
         private readonly IRoomService _roomService;
 
         public UserController(
             IUnitOfWork unitOfWork,
-            IHttpClientFactory clientFactory,
+            IJiraService jiraService,
             IJwtService jwtService,
             IRoomService roomService)
         {
             _unitOfWork = unitOfWork;
-            _clientFactory = clientFactory;
+            _jiraService = jiraService;
             _jwtService = jwtService;
             _roomService = roomService;
         }
@@ -74,14 +73,9 @@ namespace scrum_poker_server.Controllers
 
             if (jiraToken != null && jiraDomain != null)
             {
-                var client = _clientFactory.CreateClient();
+                bool tokenValid = await _jiraService.IsJiraTokenValidAsync(jiraDomain, jiraToken);
 
-                var request = new HttpRequestMessage(HttpMethod.Get, $"https://{jiraDomain}/rest/api/3/myself");
-                request.Headers.Add("Authorization", $"Basic {jiraToken}");
-
-                var response = await client.SendAsync(request);
-
-                if (!response.IsSuccessStatusCode)
+                if (!tokenValid)
                 {
                     user.JiraToken = null;
                     room.JiraDomain = null;

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http;
 using Microsoft.IdentityModel.Tokens;
 using scrum_poker_server.Data;
+using scrum_poker_server.Data.Caching;
 using scrum_poker_server.Hubs;
 using scrum_poker_server.Services;
 using System.Security.Claims;
@@ -85,13 +86,39 @@ namespace scrum_poker_server
             services.AddHttpClient();
             services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
             services.AddControllers();
+
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
-            services.AddSingleton<PokingRoomManager>(); // Used to maintain the state of room hub.
+
+            services
+                .AddSignalR()
+                .AddStackExchangeRedis(_configuration.GetConnectionString("Redis"), options =>
+                {
+                    options.Configuration.ChannelPrefix = "scrum-poker-hubs";
+                });
+
+            AddAppServices(services);
+            AddCacheServices(services, _configuration);
+        }
+
+        public static void AddCacheServices(IServiceCollection services, IConfiguration configuration)
+        {
+            services
+                .AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("Redis");
+                    options.InstanceName = "scrum-poker_";
+                });
+
+            services.AddTransient<ICacheService, CacheService>();
+        }
+
+        public static void AddAppServices(IServiceCollection services)
+        {
+            services.AddTransient<IPokingRoomManager, PokingRoomManager>(); // Used to maintain real-time sessions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddTransient<IRoomService, RoomService>();
             services.AddTransient<IJwtService, JwtService>();
             services.AddTransient<IJiraService, JiraService>();
-            services.AddSignalR();
         }
 
         public void Configure(IApplicationBuilder app)

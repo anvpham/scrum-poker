@@ -166,7 +166,6 @@ const App = () => {
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
-
 /*if (window.innerWidth < 1024) {
   ReactDOM.render(
     <h3 style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>

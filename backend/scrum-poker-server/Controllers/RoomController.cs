@@ -17,10 +17,10 @@ namespace scrum_poker_server.Controllers
     public class RoomController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly PokingRoomManager _pokingRoomManager;
+        private readonly IPokingRoomManager _pokingRoomManager;
         private readonly IRoomService _roomService;
 
-        public RoomController(IUnitOfWork unitOfWork, PokingRoomManager pokingRoomManager,
+        public RoomController(IUnitOfWork unitOfWork, IPokingRoomManager pokingRoomManager,
             IRoomService roomService)
         {
             _unitOfWork = unitOfWork;
@@ -147,15 +147,15 @@ namespace scrum_poker_server.Controllers
             {
                 return StatusCode(404);
             }
-            else if (_pokingRoomManager.FindRoom(roomCode) == null)
+            else if (await _pokingRoomManager.GetRoomAsync(roomCode) == null)
             {
                 return Ok();
             }
-            else if (_pokingRoomManager.FindRoom(roomCode).Users.Count >= 6)
+            else if ((await _pokingRoomManager.GetRoomAsync(roomCode)).Users.Count >= 6)
             {
                 return StatusCode(403);
             }
-            else if (_pokingRoomManager.FindRoom(roomCode).Users.Find(u => u.Id == userId) != null)
+            else if ((await _pokingRoomManager.GetRoomAsync(roomCode)).Users.Find(u => u.Id == userId) != null)
             {
                 return StatusCode(409);
             }

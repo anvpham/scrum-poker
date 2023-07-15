@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
 using scrum_poker_server.DTOs;
 using scrum_poker_server.Models;
@@ -15,18 +14,18 @@ namespace scrum_poker_server.Controllers
     [Route("api/story"), Consumes("application/json")]
     public class StoryController : ControllerBase
     {
-        public AppDbContext _dbContext { get; set; }
+        private readonly IUnitOfWork _unitOfWork;
 
-        public StoryController(AppDbContext dbContext)
+        public StoryController(IUnitOfWork unitOfWork)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize(Policy = "AllUsers")]
         [HttpGet, Route("get/{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var story = await _dbContext.Stories.Include(s => s.SubmittedPointByUsers).ThenInclude(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
+            var story = await _unitOfWork.StoryRepository.GetByIdAsync(id);
             if (story == null)
             {
                 return StatusCode(404, new { error = "The story is not existed" });
@@ -54,7 +53,7 @@ namespace scrum_poker_server.Controllers
         [HttpPost, Route("add")]
         public async Task<IActionResult> Add([FromBody] AddStoryDTO data)
         {
-            var room = await _dbContext.Rooms.Include(r => r.Stories).FirstOrDefaultAsync(r => r.Id == data.RoomId);
+            var room = await _unitOfWork.RoomRepository.GetByIdAsync(data.RoomId);
             if (room == null)
             {
                 return StatusCode(422, new { error = "The room does not exist" });
@@ -67,8 +66,7 @@ namespace scrum_poker_server.Controllers
 
             if (data.IsJiraStory)
             {
-                var jiraStory = _dbContext.Stories.FirstOrDefaultAsync(s => s.JiraIssueId == data.JiraIssueId && s.RoomId == data.RoomId);
-
+                var jiraStory = await _unitOfWork.StoryRepository.GetByRoomIdAndJiraIssueIdAsync(data.RoomId, data.JiraIssueId);
                 if (jiraStory != null)
                 {
                     return StatusCode(422, new { error = "You've already added this story" });
@@ -76,7 +74,7 @@ namespace scrum_poker_server.Controllers
             }
 
             var userId = Int32.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var userRoom = await _dbContext.UserRooms.FirstOrDefaultAsync(ur => ur.UserID == userId && ur.RoomId == data.RoomId);
+            var userRoom = await _unitOfWork.UserRoomRepository.GetByUserIdAndRoomCodeAsync(userId, room.Code);
 
             if (userRoom == null) return Forbid();
             else if (userRoom.Role != Role.host) return Forbid();
@@ -86,7 +84,7 @@ namespace scrum_poker_server.Controllers
 
             room.Stories.Add(story);
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { id = story.Id });
         }
@@ -99,17 +97,17 @@ namespace scrum_poker_server.Controllers
                 return StatusCode(402);
             }
 
-            var story = await _dbContext.Stories.Include(s => s.SubmittedPointByUsers).FirstOrDefaultAsync(s => s.Id == data.StoryId);
+            var story = await _unitOfWork.StoryRepository.GetByIdAsync(data.StoryId);
 
             if (story == null)
             {
                 return StatusCode(404);
             }
 
-            _dbContext.SubmittedPointByUsers.RemoveRange(story.SubmittedPointByUsers);
-            _dbContext.Stories.Remove(story);
+            story.SubmittedPointByUsers.Clear();
+            _unitOfWork.StoryRepository.Delete(story);
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return Ok(new { storyId = data.StoryId });
         }
@@ -118,18 +116,21 @@ namespace scrum_poker_server.Controllers
         [HttpPost, Route("submitpoint")]
         public async Task<IActionResult> SubmitPoint([FromBody] SubmitPointDTO data)
         {
-            var story = await _dbContext.Stories.Include(s => s.SubmittedPointByUsers).FirstOrDefaultAsync(s => s.Id == data.StoryId);
-            if (story == null) return NotFound();
+            var story = await _unitOfWork.StoryRepository.GetByIdAsync(data.StoryId);
+            if (story == null)
+                return NotFound();
 
             var userId = Int32.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var userRoom = await _dbContext.UserRooms.Include(ur => ur.User).
-                FirstOrDefaultAsync(ur => ur.RoomId == story.RoomId && ur.UserID == userId);
+            var userRoom = await _unitOfWork.UserRoomRepository.GetByUserIdAndRoomIdAsync(userId, story.RoomId);
 
-            if (userRoom == null) return Forbid();
+            if (userRoom == null)
+                return Forbid();
 
             if (data.IsFinalPoint)
             {
-                if (userRoom.Role != Role.host) return Forbid();
+                if (userRoom.Role != Role.host)
+                    return Forbid();
+
                 story.Point = data.Point;
             }
             else
@@ -149,7 +150,7 @@ namespace scrum_poker_server.Controllers
                 }
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { storyId = data.StoryId });
         }
@@ -158,20 +159,22 @@ namespace scrum_poker_server.Controllers
         [HttpPost, Route("assign")]
         public async Task<IActionResult> Assign([FromBody] AssignStoryDTO data)
         {
-            var story = await _dbContext.Stories.Include(s => s.Assignee).FirstOrDefaultAsync(s => s.Id == data.StoryId);
-            if (story == null) return NotFound();
+            var story = await _unitOfWork.StoryRepository.GetByIdAsync(data.StoryId);
+            if (story == null)
+                return NotFound();
 
             var userId = Int32.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var userRoom = await _dbContext.UserRooms.Include(ur => ur.User).
-                FirstOrDefaultAsync(ur => ur.RoomId == story.RoomId && ur.UserID == userId);
+            var userRoom = await _unitOfWork.UserRoomRepository.GetByUserIdAndRoomIdAsync(userId, story.RoomId);
 
-            if (userRoom == null) return Forbid();
-            else if (userRoom.Role != Role.host) return Forbid();
+            if (userRoom == null)
+                return Forbid();
+            else if (userRoom.Role != Role.host)
+                return Forbid();
 
-            var assignee = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == data.UserId);
+            var assignee = await _unitOfWork.UserRepository.GetByIdAsync(data.UserId);
             story.Assignee = assignee;
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { storyId = data.StoryId });
         }

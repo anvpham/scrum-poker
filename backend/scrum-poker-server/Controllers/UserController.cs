@@ -68,17 +68,19 @@ namespace scrum_poker_server.Controllers
             var room = await _unitOfWork.RoomRepository.GetByUserIdAsync(userId);
             var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
 
-            var jiraToken = user.JiraToken;
-            var jiraDomain = user.JiraDomain;
-
-            if (jiraToken != null && jiraDomain != null)
+            if (!string.IsNullOrEmpty(user.JiraDomain)
+                || !string.IsNullOrEmpty(user.JiraToken)
+                || !string.IsNullOrEmpty(user.JiraEmail))
             {
-                bool tokenValid = await _jiraService.IsJiraTokenValidAsync(jiraDomain, jiraToken);
+                bool tokenValid = await _jiraService.IsUserJiraTokenValidAsync(user.JiraDomain, user.JiraEmail, user.JiraToken);
 
                 if (!tokenValid)
                 {
                     user.JiraToken = null;
+                    user.JiraEmail = null;
+
                     room.JiraDomain = null;
+
                     await _unitOfWork.SaveChangesAsync();
                 }
             }

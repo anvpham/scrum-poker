@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
 using scrum_poker_server.DTOs;
 using scrum_poker_server.Hubs;
@@ -17,14 +16,14 @@ namespace scrum_poker_server.Controllers
     [Route("api/room"), Consumes("application/json")]
     public class RoomController : ControllerBase
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly PokingRoomManager _pokingRoomManager;
         private readonly IRoomService _roomService;
 
-        public RoomController(AppDbContext dbContext, PokingRoomManager pokingRoomManager,
+        public RoomController(IUnitOfWork unitOfWork, PokingRoomManager pokingRoomManager,
             IRoomService roomService)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
             _pokingRoomManager = pokingRoomManager;
             _roomService = roomService;
         }
@@ -35,8 +34,7 @@ namespace scrum_poker_server.Controllers
         {
             var roomCode = await _roomService.GenerateRoomCodeAsync();
 
-            var user = _dbContext.Users
-                .FirstOrDefault(u => u.Email == HttpContext.User.FindFirst(ClaimTypes.Email).Value);
+            var user = await _unitOfWork.UserRepository.GetByEmailAsync(HttpContext.User.FindFirst(ClaimTypes.Email).Value);
 
             var room = new Room
             {
@@ -46,14 +44,14 @@ namespace scrum_poker_server.Controllers
                 Description = data.Description
             };
 
-            await _dbContext.UserRooms.AddAsync(new UserRoom
+            _unitOfWork.UserRoomRepository.Add(new UserRoom
             {
                 User = user,
                 Room = room,
                 Role = Role.host
             });
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { code = roomCode, roomId = room.Id });
         }
@@ -62,19 +60,13 @@ namespace scrum_poker_server.Controllers
         [HttpGet, Route("{id}/stories")]
         public async Task<IActionResult> GetStories(int id)
         {
-            var room = await _dbContext.Rooms
-                .Include(r => r.Stories)
-                .ThenInclude(s => s.SubmittedPointByUsers)
-                .ThenInclude(s => s.User)
-                .AsSplitQuery()
-                .FirstOrDefaultAsync(r => r.Id == id);
-
+            var room = await _unitOfWork.RoomRepository.GetByIdAsync(id);
             if (room == null)
                 return NotFound(new { error = "The room doesn't exist" });
 
-            var userRoom = await _dbContext.UserRooms.
-                FirstOrDefaultAsync(ur => ur.RoomId == room.Id && ur.UserID.ToString() == HttpContext.User.FindFirst("UserId").Value);
+            int userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
 
+            var userRoom = await _unitOfWork.UserRoomRepository.GetByUserIdAndRoomCodeAsync(id, room.Code);
             if (userRoom == null)
                 return Forbid();
 
@@ -118,24 +110,26 @@ namespace scrum_poker_server.Controllers
         [HttpPost, Route("join")]
         public async Task<IActionResult> Join([FromBody] JoinRoomDTO data)
         {
-            var room = await _dbContext.Rooms.FirstOrDefaultAsync(r => r.Code == data.RoomCode);
-            if (room == null) return NotFound(new { error = "The room doesn't exist" });
+            var room = await _unitOfWork.RoomRepository.GetByRoomCodeAsync(data.RoomCode);
+            if (room == null)
+                return NotFound(new { error = "The room doesn't exist" });
 
-            var userId = HttpContext.User.FindFirst("UserId").Value;
+            var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
 
-            var userRoom = await _dbContext.UserRooms.FirstOrDefaultAsync(ur => ur.Room.Code == data.RoomCode && ur.User.Id.ToString() == userId);
+            var userRoom = await _unitOfWork.UserRoomRepository.GetByUserIdAndRoomCodeAsync(userId, data.RoomCode);
 
             if (userRoom != null)
                 return Ok(new { roomId = room.Id, roomCode = data.RoomCode, roomName = room.Name, description = room.Description, role = userRoom.Role, jiraDomain = room.JiraDomain });
 
-            await _dbContext.UserRooms.AddAsync(new UserRoom
+            _unitOfWork.UserRoomRepository.Add(new UserRoom
             {
-                User = await _dbContext.Users.FirstAsync(u => u.Id.ToString() == userId),
+                User = user,
                 Room = room,
                 Role = Role.player
             });
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { roomId = room.Id, roomCode = data.RoomCode, roomName = room.Name, description = room.Description, role = Role.player, jiraDomain = room.JiraDomain });
         }
@@ -145,7 +139,7 @@ namespace scrum_poker_server.Controllers
         [HttpGet, Route("check/{roomCode}")]
         public async Task<IActionResult> CheckRoom(string roomCode)
         {
-            var room = await _dbContext.Rooms.FirstOrDefaultAsync(r => r.Code == roomCode);
+            var room = await _unitOfWork.RoomRepository.GetByRoomCodeAsync(roomCode);
             var userClaim = HttpContext.User.FindFirst("UserId");
             var userId = int.Parse(userClaim.Value);
 

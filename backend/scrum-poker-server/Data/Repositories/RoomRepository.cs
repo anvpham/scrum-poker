@@ -6,6 +6,7 @@ namespace scrum_poker_server.Data.Repositories
 {
     public interface IRoomRepository
     {
+        public Task<Room?> GetByIdAsync(int id);
         public Task<Room?> GetByRoomCodeAsync(string roomCode);
         public Task<Room?> GetByUserIdAsync(int userId);
     }
@@ -17,6 +18,15 @@ namespace scrum_poker_server.Data.Repositories
         public RoomRepository(AppDbContext dbContext)
         {
             _dbContext = dbContext;
+        }
+
+        public async Task<Room?> GetByIdAsync(int id)
+        {
+            return await _dbContext.Rooms
+                .Include(r => r.Stories)
+                .ThenInclude(s => s.SubmittedPointByUsers)
+                .ThenInclude(s => s.User)
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<Room?> GetByRoomCodeAsync(string roomCode)

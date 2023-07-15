@@ -1,17 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using scrum_poker_server.Data;
 using scrum_poker_server.DTOs;
 using System;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json;
 using scrum_poker_server.Models;
 using System.Net;
 using System.Linq;
+using scrum_poker_server.Services;
 
 namespace scrum_poker_server.Controllers
 {
@@ -19,65 +16,53 @@ namespace scrum_poker_server.Controllers
     [ApiController]
     public class JiraController : ControllerBase
     {
-        public AppDbContext _dbContext { get; set; }
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IJiraService _jiraService;
 
-        private readonly IHttpClientFactory _clientFactory;
-
-        public JiraController(AppDbContext dbContext, IHttpClientFactory clientFactory)
+        public JiraController(IUnitOfWork unitOfWork, IJiraService jiraService)
         {
-            _dbContext = dbContext;
-            _clientFactory = clientFactory;
+            _unitOfWork = unitOfWork;
+            _jiraService = jiraService;
         }
 
         [HttpPost, Route("addtoken"), Authorize(Policy = "OfficialUsers")]
         public async Task<IActionResult> AddToken([FromBody] JiraUserCredentials data)
         {
-            if (data.JiraDomain.Contains("http") || !data.JiraDomain.Contains('.')) return StatusCode(404, new { error = "The domain is not valid" });
-            if (data.JiraDomain.Length > 50 || data.JiraEmail.Length > 50 || data.APIToken.Length > 50) return StatusCode(409, new { error = "Fields are too long" });
+            if (data.JiraDomain.Contains("http") || !data.JiraDomain.Contains('.'))
+                return StatusCode(404, new { error = "The domain is not valid" });
+            if (data.JiraDomain.Length > 50 || data.JiraEmail.Length > 50 || data.APIToken.Length > 50)
+                return StatusCode(409, new { error = "Fields are too long" });
 
             bool isDomainValid = false;
-            var client = _clientFactory.CreateClient();
-
             try
             {
-                var domainResponse = await client.GetAsync($"https://{data.JiraDomain}");
-                if (domainResponse.IsSuccessStatusCode) isDomainValid = true;
+                isDomainValid = await _jiraService.IsJiraDomainValidAsync(data.JiraDomain);
             }
             catch (Exception)
             {
                 return StatusCode(404, new { error = "The domain is not valid" });
             }
 
-            if (!isDomainValid) return StatusCode(404, new { error = "The domain is not valid" });
+            if (!isDomainValid)
+                return StatusCode(404, new { error = "The domain is not valid" });
 
-            var base64String = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{data.JiraEmail}:{data.APIToken}"));
+            bool isJiraTokenValid = await _jiraService.IsUserJiraTokenValidAsync(data.JiraDomain, data.JiraEmail, data.APIToken);
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://{data.JiraDomain}/rest/api/3/myself");
-            request.Headers.Add("Authorization", $"Basic {base64String}");
-
-            var response = await client.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-            {
+            if (!isJiraTokenValid)
                 return StatusCode(404, new { error = "The email or API token is not valid" });
-            }
 
             var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
 
-            var userRoom = await _dbContext.UserRooms
-                .Include(ur => ur.Room)
-                .ThenInclude(r => r.Stories)
-                .ThenInclude(s => s.SubmittedPointByUsers).Include(ur => ur.User).AsSplitQuery()
-                .FirstOrDefaultAsync(ur => ur.UserID == userId && ur.Room.Code == data.RoomCode);
+            var userRoom = await _unitOfWork.UserRoomRepository.GetByUserIdAndRoomCodeAsync(userId, data.RoomCode);
 
             if (userRoom.User.JiraToken != null)
             {
                 userRoom.Room.Stories.ToList().ForEach(s =>
                 {
-                    _dbContext.SubmittedPointByUsers.RemoveRange(s.SubmittedPointByUsers);
+                    s.SubmittedPointByUsers = null;
                 });
 
-                _dbContext.Stories.RemoveRange(userRoom.Room.Stories);
+                userRoom.Room.Stories.Clear();
             }
 
             userRoom.User.JiraToken = data.APIToken;
@@ -85,7 +70,7 @@ namespace scrum_poker_server.Controllers
             userRoom.Room.JiraDomain = data.JiraDomain;
             userRoom.User.JiraEmail = data.JiraEmail;
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { jiraToken = data.APIToken, jiraDomain = data.JiraDomain });
         }
@@ -98,16 +83,10 @@ namespace scrum_poker_server.Controllers
                 return Ok(new { status = "NotOk" });
             }
 
-            var client = _clientFactory.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://{data.JiraDomain}/rest/api/3/issue/picker?query={data.Query}&currentJQL");
-
             var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
 
-            var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user.JiraEmail}:{data.JiraToken}"));
-            request.Headers.Add("Authorization", $"Basic {base64String}");
-
-            var response = await client.SendAsync(request);
+            var response = await _jiraService.GetStoriesAsync(user, data.Query);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -127,7 +106,7 @@ namespace scrum_poker_server.Controllers
                 return StatusCode(422);
             }
 
-            var room = await _dbContext.Rooms.Include(r => r.Stories).FirstOrDefaultAsync(r => r.Id == data.RoomId);
+            var room = await _unitOfWork.RoomRepository.GetByIdAsync(data.RoomId);
             if (room == null)
             {
                 return StatusCode(422, new { error = "The room does not exist" });
@@ -138,35 +117,16 @@ namespace scrum_poker_server.Controllers
                 return Forbid();
             }
 
-            var jiraStory = await _dbContext.Stories.FirstOrDefaultAsync(s => s.JiraIssueId == data.IssueId && s.RoomId == data.RoomId);
+            var jiraStory = await _unitOfWork.StoryRepository.GetByRoomIdAndJiraIssueIdAsync(data.RoomId, data.IssueId);
             if (jiraStory != null)
             {
                 return StatusCode(422, new { error = "You've already added this story" });
             }
 
-            var client = _clientFactory.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://{data.JiraDomain}/rest/api/3/issue/{data.IssueId}?fields=description,summary,customfield_10026&expand=renderedFields");
-
             var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user.JiraEmail}:{data.JiraToken}"));
-            request.Headers.Add("Authorization", $"Basic {base64String}");
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
 
-            var response = await client.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return StatusCode(404);
-            }
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-            };
-
-            var content = await response.Content.ReadAsStringAsync();
-
-            JiraIssueResponse issue = JsonSerializer.Deserialize<JiraIssueResponse>(content, options);
+            JiraIssueResponse issue = await _jiraService.GetIssueAsync(user, data.IssueId);
 
             int point;
 
@@ -189,7 +149,7 @@ namespace scrum_poker_server.Controllers
             };
 
             room.Stories.Add(story);
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return StatusCode(201, new { storyId = story.Id, issueId = data.IssueId });
         }
@@ -206,20 +166,11 @@ namespace scrum_poker_server.Controllers
 
                 return StatusCode(422);
             }
-
-            var client = _clientFactory.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Put, $"https://{data.JiraDomain}/rest/api/3/issue/{data.IssueId}");
             var userId = int.Parse(HttpContext.User.FindFirst("UserId").Value);
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
 
-            var base64String = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{user.JiraEmail}:{data.JiraToken}"));
-            request.Headers.Add("Authorization", $"Basic {base64String}");
-
-            var jsonData = JsonSerializer.Serialize(new JiraSubmitPointRequest { fields = new fields { customfield_10026 = data.Point } });
-            var requestBody = new StringContent(jsonData, Encoding.UTF8, "application/json");
-            request.Content = requestBody;
-
-            var response = await client.SendAsync(request);
+            var response = await _jiraService
+                .UpdateIssueAsync(user, data.IssueId, new JiraSubmitPointRequest { fields = new fields { customfield_10026 = data.Point } });
 
             if (!response.IsSuccessStatusCode)
             {

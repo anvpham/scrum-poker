@@ -7,58 +7,95 @@ namespace UnitTests
     public class PokingRoomTests
     {
         [Fact]
-        public void Add_User_List_Must_Contain_User()
+        public void update_user_status_must_update()
         {
             // Arrange
-            var user1 = new RoomHubUser("Test", 1, "ready", Role.host, 3);
-            var user2 = new RoomHubUser("Test", 2, "ready", Role.player, 3);
-            var pokingRoom = new PokingRoom("123", user1, "waiting");
+            var pokingRoom = new PokingRoom
+            {
+                Users = new List<RoomHubUser>
+                {
+                    new RoomHubUser("user", 1, "asd", Role.host)
+                }
+            };
 
             // Act
-            pokingRoom.AddUser(user2);
+            pokingRoom.UpdateUserStatus(1, "qwe", 10);
 
             // Assert
-            Assert.Equal(2, pokingRoom.Users.Count);
-            Assert.Equal(user2.Name, pokingRoom.Users[1].Name);
-            Assert.Equal(user2.Id, pokingRoom.Users[1].Id);
-            Assert.Equal(user2.Status, pokingRoom.Users[1].Status);
-            Assert.Equal(user2.Role, pokingRoom.Users[1].Role);
-            Assert.Equal(user2.Point, pokingRoom.Users[1].Point);
+            Assert.Equal("qwe", pokingRoom.Users[0].Status);
+            Assert.Equal(10, pokingRoom.Users[0].Point);
+            Assert.Equal(10, pokingRoom.GetMostFrequentPoint());
+            Assert.Equal(1, pokingRoom.PointsFrequency[10]);
         }
 
         [Fact]
-        public void Add_Story_List_Must_Contain_Story()
+        public void update_user_status_not_existed_must_throw_exception()
         {
             // Arrange
-            var user1 = new RoomHubUser("Test", 1, "ready", Role.host, 3);
-
-            int storyId = 1;
-
-            var pokingRoom = new PokingRoom("123", user1, "waiting");
+            var pokingRoom = new PokingRoom
+            {
+                Users = new List<RoomHubUser>
+                {
+                    new RoomHubUser("user", 1, "asd", Role.host)
+                }
+            };
 
             // Act
-            pokingRoom.AddStory(storyId);
+            var exception = Assert.Throws<ApplicationException>(() => pokingRoom.UpdateUserStatus(2, "qwe", 10));
 
             // Assert
-            Assert.Single(pokingRoom.StoryIds);
+            Assert.Equal("UserId 2 not found.", exception.Message);
         }
 
         [Fact]
-        public void Remove_Story_List_Must_Not_Contain_Story()
+        public void update_status_for_all_users_must_update()
         {
             // Arrange
-            var user1 = new RoomHubUser("Test", 1, "ready", Role.host, 3);
-
-            int storyId = 1;
-
-            var pokingRoom = new PokingRoom("123", user1, "waiting");
+            var pokingRoom = new PokingRoom
+            {
+                Users = new List<RoomHubUser>
+                {
+                    new RoomHubUser("user1", 1, "asd", Role.host),
+                    new RoomHubUser("user2", 2, "asd", Role.player),
+                }
+            };
+            pokingRoom.UpdateUserStatus(1, "qwe", 5);
 
             // Act
-            pokingRoom.AddStory(storyId);
-            pokingRoom.RemoveStory(storyId);
+            pokingRoom.UpdateStatusForAllUsers("standBy");
 
             // Assert
-            Assert.Empty(pokingRoom.StoryIds);
+            Assert.Equal("standBy", pokingRoom.Users[0].Status);
+            Assert.Equal(-1, pokingRoom.Users[0].Point);
+            Assert.Equal("standBy", pokingRoom.Users[1].Status);
+            Assert.Equal(-1, pokingRoom.Users[1].Point);
+            Assert.Equal(-1, pokingRoom.CurrentStoryPoint);
+            Assert.Empty(pokingRoom.PointsFrequency);
+        }
+
+        [Fact]
+        public void get_most_frequent_point_return_expected()
+        {
+            // Arrange
+            var pokingRoom = new PokingRoom
+            {
+                Users = new List<RoomHubUser>
+                {
+                    new RoomHubUser("user1", 1, "asd", Role.host),
+                    new RoomHubUser("user2", 2, "asd", Role.player),
+                    new RoomHubUser("user3", 3, "asd", Role.player),
+                }
+            };
+
+            pokingRoom.UpdateUserStatus(1, "asd", 5);
+            pokingRoom.UpdateUserStatus(2, "asd", 8);
+            pokingRoom.UpdateUserStatus(3, "asd", 8);
+
+            // Act
+            var mostFrequentPoint = pokingRoom.GetMostFrequentPoint();
+
+            // Assert
+            Assert.Equal(8, mostFrequentPoint);
         }
     }
 }

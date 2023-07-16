@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using scrum_poker_server.HubModels;
 using scrum_poker_server.Models;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -13,9 +14,9 @@ namespace scrum_poker_server.Hubs
     {
         private readonly IPokingRoomManager _pokingRoomManager;
 
-        public RoomHub(IPokingRoomManager pokingRoomManager)
+        public RoomHub(IPokingRoomManager roomHubManager)
         {
-            _pokingRoomManager = pokingRoomManager;
+            _pokingRoomManager = roomHubManager;
         }
 
         public async Task Combine(string roomCode, int role)
@@ -28,62 +29,84 @@ namespace scrum_poker_server.Hubs
 
             if (room == null)
             {
-                var roomHubUser = new RoomHubUser(userName, userId, "standBy", (Role)role, 0);
-                room = await _pokingRoomManager.AddRoomAsync(roomCode, roomHubUser);
+                room = new PokingRoom
+                {
+                    RoomCode = roomCode,
+                    Users = new List<RoomHubUser> { new RoomHubUser(userName, userId, "standBy", (Role)role, 0) },
+                };
+
                 await Clients.Caller.SendAsync("joinRoom", new { users = room.Users, roomState = room.State, currentStoryPoint = room.CurrentStoryPoint });
+                await _pokingRoomManager.AddUpdateRoomAsync(room);
             }
             else
             {
-                room = await _pokingRoomManager.AddUserAsync(room.RoomCode, new RoomHubUser(userName, int.Parse(Context.User.FindFirst("UserId").Value), "standBy", (Role)role, 0));
-                var users = room.Users;
+                room.Users.Add(new RoomHubUser(userName, int.Parse(Context.User.FindFirst("UserId").Value), "standBy", (Role)role, 0));
+
                 await Clients.GroupExcept(roomCode, Context.ConnectionId).SendAsync("newUserConnected", new { name = userName, id = userId, status = "standBy", point = 0, role });
-                await Clients.Caller.SendAsync("joinRoom", new { users, roomState = room.State, currentStoryPoint = room.CurrentStoryPoint });
+                await Clients.Caller.SendAsync("joinRoom", new { users = room.Users, roomState = room.State, currentStoryPoint = room.CurrentStoryPoint });
                 await Clients.Caller.SendAsync("currentStoryChanged", new { id = room.CurrentStoryId });
+                await _pokingRoomManager.AddUpdateRoomAsync(room);
             }
         }
 
         public async Task ChangeUserStatus(string roomCode, string status, int point)
         {
             var userId = int.Parse(Context.User.FindFirst("UserId").Value);
+            var room = await _pokingRoomManager.GetRoomAsync(roomCode);
 
-            await _pokingRoomManager.UpdateUserStatusAsync(roomCode, userId, status, point);
+            room.UpdateUserStatus(userId, status, point);
+
             await Clients.Group(roomCode).SendAsync("userStatusChanged", new { userId, status, point });
+            await _pokingRoomManager.AddUpdateRoomAsync(room);
         }
 
         public async Task ChangeRoomState(string roomCode, string roomState)
         {
-            await _pokingRoomManager.UpdateRoomStateAsync(roomCode, roomState);
+            var room = await _pokingRoomManager.GetRoomAsync(roomCode);
+            room.State = roomState;
 
             if (roomState == "revealed")
             {
-                var users = await _pokingRoomManager.UpdateStatusForAllUsersAsync(roomCode, "revealed");
+                room.UpdateStatusForAllUsers("revealed");
 
-                await Clients.Group(roomCode).SendAsync("roomStateChanged", new { roomState, users });
+                await Clients.Group(roomCode).SendAsync("roomStateChanged", new { roomState, users = room.Users });
 
-                var recommendedPoint = await _pokingRoomManager.GetMostFrequentPointAsync(roomCode);
+                var recommendedPoint = room.GetMostFrequentPoint();
 
                 await Clients.Group(roomCode).SendAsync("currentStoryPointChanged", new { point = recommendedPoint });
             }
             else if (roomState == "waiting")
             {
-                var users = await _pokingRoomManager.UpdateStatusForAllUsersAsync(roomCode, "standBy");
+                room.UpdateStatusForAllUsers("standBy");
 
-                await Clients.Group(roomCode).SendAsync("roomStateChanged", new { roomState, users });
+                await Clients.Group(roomCode).SendAsync("roomStateChanged", new { roomState, users = room.Users });
+
+                room.CurrentStoryPoint = -1;
+                room.PointsFrequency.Clear();
             }
-            else
-                await Clients.Group(roomCode).SendAsync("roomStateChanged", new { roomState });
+            else await Clients.Group(roomCode).SendAsync("roomStateChanged", new { roomState });
+
+            await _pokingRoomManager.AddUpdateRoomAsync(room);
         }
 
         public async Task AddStory(string roomCode, int id)
         {
             await Clients.Group(roomCode).SendAsync("storyAdded", new { id });
-            await _pokingRoomManager.AddStoryAsync(roomCode, id);
+
+            var room = await _pokingRoomManager.GetRoomAsync(roomCode);
+            room.StoryIds.Add(id);
+
+            await _pokingRoomManager.AddUpdateRoomAsync(room);
         }
 
         public async Task DeleteStory(string roomCode, int id)
         {
             await Clients.Group(roomCode).SendAsync("storyDeleted", new { id });
-            await _pokingRoomManager.RemoveStoryAsync(roomCode, id);
+
+            var room = await _pokingRoomManager.GetRoomAsync(roomCode);
+            room.StoryIds.Remove(id);
+
+            await _pokingRoomManager.AddUpdateRoomAsync(room);
         }
 
         public async Task UpdateStory(string roomCode, int id)
@@ -94,13 +117,21 @@ namespace scrum_poker_server.Hubs
         public async Task ChangeCurrentStory(string roomCode, int id)
         {
             await Clients.Group(roomCode).SendAsync("currentStoryChanged", new { id });
-            await _pokingRoomManager.UpdateCurrentStoryAsync(roomCode, id);
+
+            var room = await _pokingRoomManager.GetRoomAsync(roomCode);
+            room.CurrentStoryId = id;
+
+            await _pokingRoomManager.AddUpdateRoomAsync(room);
         }
 
         public async Task ChangeCurrentStoryPoint(string roomCode, int point)
         {
             await Clients.Group(roomCode).SendAsync("currentStoryPointChanged", new { point });
-            await _pokingRoomManager.UpdateCurrentStoryPointAsync(roomCode, point);
+
+            var room = await _pokingRoomManager.GetRoomAsync(roomCode);
+            room.CurrentStoryPoint = point;
+
+            await _pokingRoomManager.AddUpdateRoomAsync(room);
         }
 
         public async Task Reload(string roomCode)
@@ -112,7 +143,7 @@ namespace scrum_poker_server.Hubs
         {
             var userId = int.Parse(Context.User.FindFirst("UserId").Value);
             var room = await _pokingRoomManager.GetRoomAsync(roomCode);
-            if(room.Users.FirstOrDefault(u => u.Id == userId) == null)
+            if (room.Users.FirstOrDefault(u => u.Id == userId) == null)
             {
                 return;
             }
@@ -120,7 +151,10 @@ namespace scrum_poker_server.Hubs
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomCode);
                 await Clients.Group(roomCode).SendAsync("userLeft", new { userId });
-                await _pokingRoomManager.RemoveUserAsync(room.RoomCode, userId);
+
+                room.Users.RemoveAll(u => u.Id == userId);
+
+                await _pokingRoomManager.AddUpdateRoomAsync(room);
             }
         }
     }

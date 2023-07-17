@@ -1,8 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 as build-env
 WORKDIR /src
-COPY backend/scrum-poker-server .
+COPY backend/scrum-poker-server/*.csproj .
 RUN dotnet restore
-RUN dotnet publish -c Release --runtime linux-x64 --self-contained -o /publish
+COPY backend/scrum-poker-server .
+RUN dotnet publish -c Release -o /publish
 RUN dotnet dev-certs https
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 as runtime

@@ -9,7 +9,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0 as runtime
 WORKDIR /publish
 COPY --from=build-env /publish .
 COPY --from=build-env /root/.dotnet/corefx/cryptography/x509stores/my/* /root/.dotnet/corefx/cryptography/x509stores/my/
-EXPOSE 80
-EXPOSE 443
+EXPOSE 5001
 
 ENTRYPOINT ["dotnet", "scrum-poker-server.dll"]

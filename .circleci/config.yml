@@ -21,8 +21,8 @@ jobs:
           name: List directory
           command: ls
       - run:
-          # working_directory: /backend/tests/UnitTests
           name: Run unit tests
+          working_directory: ~/backend/tests/UnitTests
           command: dotnet test
 
 # Invoke jobs via workflows

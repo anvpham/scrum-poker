@@ -18,7 +18,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run unit tests
+          name: Run integration tests
           working_directory: ~/project/backend/tests/IntegrationTests
           command: dotnet test
 
@@ -29,7 +29,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run unit tests
+          name: Build
           working_directory: ~/project/backend/scrum-poker-server
           command: dotnet build
 

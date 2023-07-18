@@ -18,7 +18,7 @@ jobs:
     steps:
       - checkout
       - run:
-          working_directory: ~/backend/tests/UnitTests
+          working_directory: /backend/tests/UnitTests
           name: Run unit tests
           command: dotnet test
 

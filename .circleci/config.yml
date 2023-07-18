@@ -7,13 +7,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: List directory
-          working_directory: ~/project/backend/tests/UnitTests
-          command: ls
-      - run:
           name: Run unit tests
           working_directory: ~/project/backend/tests/UnitTests
           command: dotnet test
+      - run:
+          name: Build
+          working_directory: ~/project/backend/scrum-poker-server
+          command: dotnet build
 
 workflows:
   sample:

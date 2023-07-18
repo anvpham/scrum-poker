@@ -16,15 +16,14 @@ jobs:
     # Add steps to the job
     # See: https://circleci.com/docs/configuration-reference/#steps
     steps:
-      - checkout
       - run:
           name: List directory
-          working_directory: ~/backend/tests/UnitTests
+          working_directory: backend/tests/UnitTests
           command: ls
-      # - run:
-      #     name: Run unit tests
-      #     command: dotnet test
-    commands:
+      - run:
+          name: Run unit tests
+          working_directory: backend/tests/UnitTests
+          command: dotnet test
       
 
 # Invoke jobs via workflows

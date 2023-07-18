@@ -1,9 +1,6 @@
 version: 2.1
 jobs:
   unit-test:
-    filters:
-      branches:
-        only: master
     docker:
       - image: mcr.microsoft.com/dotnet/sdk:6.0
         user: root
@@ -15,9 +12,6 @@ jobs:
           command: dotnet test
 
   integration-test:
-    filters:
-      branches:
-        only: master
     docker:
       - image: mcr.microsoft.com/dotnet/sdk:6.0
         user: root
@@ -29,9 +23,6 @@ jobs:
           command: dotnet test
 
   build:
-    filters:
-      branches:
-        only: master
     docker:
       - image: mcr.microsoft.com/dotnet/sdk:6.0
         user: root
@@ -45,10 +36,19 @@ jobs:
 workflows:
   build-and-test:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only: master
       - unit-test:
+          filters:
+            branches:
+              only: master
           requires:
             - build
       - integration-test:
+          filters:
+            branches:
+              only: master
           requires:
             - build

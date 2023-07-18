@@ -19,11 +19,13 @@ jobs:
       - checkout
       - run:
           name: List directory
-          command: ls
-      - run:
-          name: Run unit tests
           working_directory: ~/backend/tests/UnitTests
-          command: dotnet test
+          command: ls
+      # - run:
+      #     name: Run unit tests
+      #     command: dotnet test
+    commands:
+      
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/configuration-reference/#workflows

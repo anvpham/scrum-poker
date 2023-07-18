@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  build-and-test:
+  unit-test:
     docker:
       - image: mcr.microsoft.com/dotnet/sdk:6.0
         user: root
@@ -10,12 +10,36 @@ jobs:
           name: Run unit tests
           working_directory: ~/project/backend/tests/UnitTests
           command: dotnet test
+
+  integration-test:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:6.0
+        user: root
+    steps:
+      - checkout
       - run:
-          name: Build
+          name: Run unit tests
+          working_directory: ~/project/backend/tests/IntegrationTests
+          command: dotnet test
+
+  build:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:6.0
+        user: root
+    steps:
+      - checkout
+      - run:
+          name: Run unit tests
           working_directory: ~/project/backend/scrum-poker-server
           command: dotnet build
 
 workflows:
   sample:
     jobs:
-      - build-and-test
+      - build
+      - unit-test:
+          requires:
+            - build
+      - integration-test:
+          requires:
+            - build

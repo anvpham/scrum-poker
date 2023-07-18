@@ -18,11 +18,11 @@ jobs:
     steps:
       - run:
           name: List directory
-          working_directory: backend/tests/UnitTests
+          working_directory: ~/backend/tests/UnitTests
           command: ls
       - run:
           name: Run unit tests
-          working_directory: backend/tests/UnitTests
+          working_directory: ~/backend/tests/UnitTests
           command: dotnet test
       
 

@@ -75,12 +75,12 @@ namespace scrum_poker_server
                 options.AddPolicy("OfficialUsers", policyBuilder =>
                 {
                       policyBuilder.RequireClaim(ClaimTypes.Email);
-                  });
+                });
 
                 options.AddPolicy("AllUsers", policyBuilder =>
                 {
                       policyBuilder.RequireClaim("UserId");
-                  });
+                });
             });
 
             services.AddHttpClient();

@@ -10,9 +10,16 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Xunit;
 
 namespace IntegrationTests
 {
+    [CollectionDefinition("TestWebAppFactoryCollection")]
+    public class TestWebAppFactoryCollection : ICollectionFixture<TestWebAppFactory>
+    {
+
+    }
+
     public class TestWebAppFactory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)

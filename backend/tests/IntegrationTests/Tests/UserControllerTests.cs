@@ -7,7 +7,8 @@ using Xunit;
 
 namespace IntegrationTests
 {
-    public class UserControllerTests : IClassFixture<TestWebAppFactory>, IDisposable
+    [Collection("TestWebAppFactoryCollection")]
+    public class UserControllerTests : IDisposable
     {
         private readonly TestWebAppFactory _factory;
 

@@ -44,8 +44,9 @@ namespace IntegrationTests.Tests
             var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
-            // Act
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
+
+            // Act
             var response = await client.GetAsync("api/story/get/1");
 
             // Assert
@@ -126,6 +127,33 @@ namespace IntegrationTests.Tests
 
             // Assert
             Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task delete_story_story_not_found_return_404()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+
+            var user = new User
+            {
+                Email = "user@email.com",
+                Name = "user",
+                Password = "asdqwezxc"
+            };
+
+            var scope = _factory.Services.CreateScope();
+
+            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            string userToken = jwtService.GenerateToken(user);
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
+
+            // Act
+            var response = await client.DeleteAsync("api/story/delete/1");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
     }
 }

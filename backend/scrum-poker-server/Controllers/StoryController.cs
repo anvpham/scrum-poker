@@ -89,15 +89,15 @@ namespace scrum_poker_server.Controllers
             return StatusCode(201, new { id = story.Id });
         }
 
-        [HttpDelete, Route("delete"), Authorize(Policy = "OfficialUsers")]
-        public async Task<IActionResult> Delete([FromBody] DeleteStory data)
+        [HttpDelete, Route("delete/{id}"), Authorize(Policy = "OfficialUsers")]
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            if (data.StoryId == 0)
+            if (id == 0)
             {
                 return StatusCode(402);
             }
 
-            var story = await _unitOfWork.StoryRepository.GetByIdAsync(data.StoryId);
+            var story = await _unitOfWork.StoryRepository.GetByIdAsync(id);
 
             if (story == null)
             {
@@ -109,7 +109,7 @@ namespace scrum_poker_server.Controllers
 
             await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new { storyId = data.StoryId });
+            return Ok(new { storyId = id });
         }
 
         [Authorize(Policy = "AllUsers")]

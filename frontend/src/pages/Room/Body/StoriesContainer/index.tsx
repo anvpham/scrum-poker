@@ -316,17 +316,13 @@ const StoriesContainer: React.FC<Props> = ({
               roomState === 'waiting' && role === 0
                 ? async (event: React.MouseEvent) => {
                     event?.stopPropagation();
-                    const requestBody = {
-                      storyId: s.id,
-                    };
 
-                    await fetch(DELETE_STORY, {
+                    await fetch(`${DELETE_STORY}/${s.id}`, {
                       method: 'DELETE',
                       headers: {
                         Authorization: getAuthHeader(),
                         'Content-Type': 'application/json',
                       },
-                      body: JSON.stringify(requestBody),
                     });
 
                     roomConnection.send('DeleteStory', roomCode, s.id);

@@ -13,17 +13,18 @@ namespace IntegrationTests.Tests
     public class StoryControllerTests : IDisposable
     {
         private readonly TestWebAppFactory _factory;
+        private readonly IServiceScope _scope;
 
         public StoryControllerTests(TestWebAppFactory factory)
         {
             _factory = factory;
+            _scope = _factory.Services.CreateScope();
         }
 
         // Cleanup in-memory db after each test
         public void Dispose()
         {
-            var scope = _factory.Services.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
             dbContext.Database.EnsureDeleted();
         }
 
@@ -40,8 +41,7 @@ namespace IntegrationTests.Tests
                 Password = "asdqwezxc"
             };
 
-            var scope = _factory.Services.CreateScope();
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
@@ -59,8 +59,7 @@ namespace IntegrationTests.Tests
             // Arrange
             var client = _factory.CreateClient();
 
-            var scope = _factory.Services.CreateScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var unitOfWork = _scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var user = new User
             {
@@ -82,7 +81,7 @@ namespace IntegrationTests.Tests
 
             await unitOfWork.SaveChangesAsync();
 
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
             // Act
@@ -108,9 +107,7 @@ namespace IntegrationTests.Tests
                 Password = "asdqwezxc"
             };
 
-            var scope = _factory.Services.CreateScope();
-
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
@@ -142,9 +139,7 @@ namespace IntegrationTests.Tests
                 Password = "asdqwezxc"
             };
 
-            var scope = _factory.Services.CreateScope();
-
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");

@@ -63,5 +63,30 @@ namespace IntegrationTests.Tests
             // Assert
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         }
+
+        [Fact]
+        public async Task get_stories_room_not_found_return_404()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            var user = new User
+            {
+                Id = 1,
+                Email = "user@email.com",
+                Name = "user",
+                Password = "asdqwezxc"
+            };
+
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
+            string userToken = jwtService.GenerateToken(user);
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
+
+            // Act
+            var response = await client.GetAsync("api/room/1/stories");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
     }
 }

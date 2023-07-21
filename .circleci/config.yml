@@ -138,14 +138,14 @@ workflows:
             - integration-test
       - terraform-apply:
           requires:
-            - plan-apply
+            - terraform-plan-apply
       - load-test:
           requires:
-            - apply
+            - terraform-apply
       - terraform-plan-destroy:
           requires:
-            - apply
+            - terraform-apply
             - load-test
       - terraform-destroy:
           requires:
-            - plan-destroy
+            - terraform-plan-destroy

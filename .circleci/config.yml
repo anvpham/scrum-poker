@@ -73,7 +73,7 @@ jobs:
       - run:
           name: terraform create destroy plan
           command: |
-            terraform plan -destroy -out tfdestroy -var-file terraform.tfvars
+            terraform plan -destroy -out tfdestroy
       - persist_to_workspace:
           root: .
           paths:
@@ -115,7 +115,6 @@ workflows:
             branches:
               only: master
           requires:
-            - build
             - unit-test
             - integration-test
       - apply:

@@ -1,4 +1,13 @@
 terraform {
+
+  cloud {
+    organization = "avpham"
+
+    workspaces {
+      name = "scrum-poker"
+    }
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"

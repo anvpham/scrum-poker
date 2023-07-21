@@ -13,9 +13,8 @@ jobs:
           command: dotnet build
 
   build-and-push-docker-image:
-    docker:
-      - image: cimg/base:2023.07
-        user: root
+    machine:
+      image: ubuntu-2204:2023.07.1
     steps:
       - checkout
       - run:

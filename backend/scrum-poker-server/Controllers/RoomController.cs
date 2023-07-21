@@ -29,7 +29,7 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "OfficialUsers")]
-        [HttpPost, Route("create")]
+        [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRoomDTO data)
         {
             var roomCode = await _roomService.GenerateRoomCodeAsync();

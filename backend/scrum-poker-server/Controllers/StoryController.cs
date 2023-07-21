@@ -22,7 +22,7 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "AllUsers")]
-        [HttpGet, Route("get/{id}")]
+        [HttpGet, Route("{id}")]
         public async Task<IActionResult> Get(int id)
         {
             var story = await _unitOfWork.StoryRepository.GetByIdAsync(id);
@@ -50,7 +50,7 @@ namespace scrum_poker_server.Controllers
         }
 
         [Authorize(Policy = "OfficialUsers")]
-        [HttpPost, Route("add")]
+        [HttpPost]
         public async Task<IActionResult> Add([FromBody] AddStoryDTO data)
         {
             var room = await _unitOfWork.RoomRepository.GetByIdAsync(data.RoomId);
@@ -89,7 +89,7 @@ namespace scrum_poker_server.Controllers
             return StatusCode(201, new { id = story.Id });
         }
 
-        [HttpDelete, Route("delete/{id}"), Authorize(Policy = "OfficialUsers")]
+        [HttpDelete, Route("{id}"), Authorize(Policy = "OfficialUsers")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             if (id == 0)

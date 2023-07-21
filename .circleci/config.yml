@@ -42,15 +42,18 @@ jobs:
       - attach_workspace:
           at: .
       - checkout
-      - run: 
+      - run:
           name: Setup env variables for load testing
-          command: cat bash.env >> $BASH_ENV
+          command: |
+            pwd
+            ls
+            cat bash.env >> $BASH_ENV
       - run:
           name: Run load tests using Python Locust
           working_directory: ~/project/backend/tests/LoadTests
           command: locust
 
-  plan-apply:
+  terraform-plan-apply:
     working_directory: /tmp/project
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
@@ -64,9 +67,9 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .
+            - tfapply
 
-  apply:
+  terraform-apply:
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
     steps:
@@ -79,7 +82,7 @@ jobs:
       - run:
           name: Get AWS alb url and pass to load-test job env variables
           command: |
-            alb_url=$(terraform output alb_url)
+            alb_url=$(terraform output -raw alb_url)
             echo "export LOAD_TEST_API_HOST=$alb_url" >> $BASH_ENV
             cp $BASH_ENV bash.env
             ls
@@ -88,9 +91,9 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .
+            - bash.env
 
-  plan-destroy:
+  terraform-plan-destroy:
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
     steps:
@@ -103,9 +106,9 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - .
+            - tfdestroy
 
-  destroy:
+  terraform-destroy:
     docker:
       - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
     steps:
@@ -115,7 +118,6 @@ jobs:
           name: terraform destroy
           command: |
             terraform apply -auto-approve tfdestroy
-
 
 workflows:
   build-and-test:
@@ -130,20 +132,20 @@ workflows:
       - integration-test:
           requires:
             - build
-      - plan-apply:
+      - terraform-plan-apply:
           requires:
             - unit-test
             - integration-test
-      - apply:
+      - terraform-apply:
           requires:
-            - plan-apply
+            - terraform-plan-apply
       - load-test:
           requires:
-            - apply
-      - plan-destroy:
+            - terraform-apply
+      - terraform-plan-destroy:
           requires:
-            - apply
+            - terraform-apply
             - load-test
-      - destroy:
+      - terraform-destroy:
           requires:
-            - plan-destroy
+            - terraform-plan-destroy

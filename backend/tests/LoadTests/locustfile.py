@@ -2,9 +2,9 @@ from locust import HttpUser, task
 import os
 import requests
 
-apiHost = os.environ['load_test_api_host']
-email = os.environ['load_test_username']
-password = os.environ['load_test_password']
+apiHost = os.environ['LOAD_TEST_API_HOST']
+email = os.environ['LOAD_TEST_USERNAME']
+password = os.environ['LOAD_TEST_PASSWORD']
 
 loginResponse = requests.post(f'{apiHost}/api/user/login', json={"email": email, "password":password}, verify=False)
 token = loginResponse.json()['jwtToken']

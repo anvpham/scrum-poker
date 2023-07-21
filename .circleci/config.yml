@@ -77,7 +77,7 @@ jobs:
           command: |
             terraform apply -auto-approve tfapply
             alb_url=$(terraform output alb_url)
-            echo "export alb_url=$alb_url" >> $BASH_ENV
+            echo "export LOAD_TEST_API_HOST=$alb_url" >> $BASH_ENV
             cp $BASH_ENV bash.env
       - persist_to_workspace:
           root: .

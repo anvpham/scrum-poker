@@ -12,6 +12,25 @@ jobs:
           working_directory: ~/project/backend/scrum-poker-server
           command: dotnet build
 
+  build-and-push-docker-image:
+    docker:
+      - image: cimg/base:2023.07
+        user: root
+    steps:
+      - checkout
+      - run:
+          name: Login to Docker Hub
+          command: |
+            printenv DOCKER_ACCESS_TOKEN | docker login --username anvpham --password-stdin
+      - run:
+          name: Build Docker image 
+          command: |
+            docker build -t anvpham/scrum-poker-api:latest .
+      - run:
+          name: Push Docker image 
+          command: |
+            docker push anvpham/scrum-poker-api:latest
+
   unit-test:
     docker:
       - image: mcr.microsoft.com/dotnet/sdk:6.0
@@ -46,9 +65,11 @@ jobs:
           name: Setup env variables for load testing
           working_directory: ~/tmp/workspace
           command: |
-            pwd
-            ls
             cat bash.env >> $BASH_ENV
+      - run:
+          name: Wait for ECS service to start
+          command: |
+            sleep 30
       - run:
           name: Run load tests using Python Locust
           working_directory: ~/project/backend/tests/LoadTests
@@ -86,9 +107,6 @@ jobs:
             alb_url=$(terraform output -raw alb_url)
             echo "export LOAD_TEST_API_HOST=$alb_url" >> $BASH_ENV
             cp $BASH_ENV bash.env
-            ls
-            cat $BASH_ENV
-            cat bash.env
       - persist_to_workspace:
           root: .
           paths:
@@ -133,10 +151,13 @@ workflows:
       - integration-test:
           requires:
             - build
-      - terraform-plan-apply:
+      - build-and-push-docker-image:
           requires:
             - unit-test
             - integration-test
+      - terraform-plan-apply:
+          requires:
+            - build-and-push-docker-image
       - terraform-apply:
           requires:
             - terraform-plan-apply

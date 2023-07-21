@@ -73,12 +73,18 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: terraform
+          name: Run terraform apply
           command: |
             terraform apply -auto-approve tfapply
+      - run:
+          name: Get AWS alb url and pass to load-test job env variables
+          command: |
             alb_url=$(terraform output alb_url)
             echo "export LOAD_TEST_API_HOST=$alb_url" >> $BASH_ENV
             cp $BASH_ENV bash.env
+            ls
+            cat $BASH_ENV
+            cat bash.env
       - persist_to_workspace:
           root: .
           paths:

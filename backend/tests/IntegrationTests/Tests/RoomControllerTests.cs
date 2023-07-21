@@ -58,7 +58,7 @@ namespace IntegrationTests.Tests
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
 
             // Act
-            var response = await client.PostAsync("api/room/create", JsonContent.Create(createRoomData));
+            var response = await client.PostAsync("api/room", JsonContent.Create(createRoomData));
 
             // Assert
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);

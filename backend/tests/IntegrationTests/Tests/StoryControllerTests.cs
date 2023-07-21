@@ -47,7 +47,7 @@ namespace IntegrationTests.Tests
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
 
             // Act
-            var response = await client.GetAsync("api/story/get/1");
+            var response = await client.GetAsync("api/story/1");
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -88,7 +88,7 @@ namespace IntegrationTests.Tests
 
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
 
-            var response = await client.GetAsync("api/story/get/1");
+            var response = await client.GetAsync("api/story/1");
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -120,7 +120,7 @@ namespace IntegrationTests.Tests
             };
 
             // Act
-            var response = await client.PostAsync("api/story/add", JsonContent.Create(addStoryData));
+            var response = await client.PostAsync("api/story", JsonContent.Create(addStoryData));
 
             // Assert
             Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
@@ -145,7 +145,7 @@ namespace IntegrationTests.Tests
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
 
             // Act
-            var response = await client.DeleteAsync("api/story/delete/1");
+            var response = await client.DeleteAsync("api/story/1");
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);

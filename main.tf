@@ -9,26 +9,6 @@ terraform {
   required_version = ">= 1.2.0"
 }
 
-variable "region" {
-  type = string
-}
-
-variable "vpc_id" {
-  type = string
-}
-
-variable "cluster_arn" {
-  type = string
-}
-
-variable "task_definitions_arn" {
-  type = string
-}
-
-variable "subnets" {
-  type = list(string)
-}
-
 provider "aws" {
   region = var.region
 }

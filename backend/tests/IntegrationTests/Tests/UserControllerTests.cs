@@ -11,17 +11,18 @@ namespace IntegrationTests
     public class UserControllerTests : IDisposable
     {
         private readonly TestWebAppFactory _factory;
+        private readonly IServiceScope _scope;
 
         public UserControllerTests(TestWebAppFactory factory)
         {
             _factory = factory;
+            _scope = factory.Services.CreateScope();
         }
 
         // Cleanup in-memory db after each test
         public void Dispose()
         {
-            var scope = _factory.Services.CreateScope(); // Dispose in-memory db
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
             dbContext.Database.EnsureDeleted();
         }
 

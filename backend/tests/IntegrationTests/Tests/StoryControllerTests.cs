@@ -13,17 +13,18 @@ namespace IntegrationTests.Tests
     public class StoryControllerTests : IDisposable
     {
         private readonly TestWebAppFactory _factory;
+        private readonly IServiceScope _scope;
 
         public StoryControllerTests(TestWebAppFactory factory)
         {
             _factory = factory;
+            _scope = _factory.Services.CreateScope();
         }
 
         // Cleanup in-memory db after each test
         public void Dispose()
         {
-            var scope = _factory.Services.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
             dbContext.Database.EnsureDeleted();
         }
 
@@ -40,12 +41,12 @@ namespace IntegrationTests.Tests
                 Password = "asdqwezxc"
             };
 
-            var scope = _factory.Services.CreateScope();
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
-            // Act
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
+
+            // Act
             var response = await client.GetAsync("api/story/get/1");
 
             // Assert
@@ -58,8 +59,7 @@ namespace IntegrationTests.Tests
             // Arrange
             var client = _factory.CreateClient();
 
-            var scope = _factory.Services.CreateScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var unitOfWork = _scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var user = new User
             {
@@ -81,7 +81,7 @@ namespace IntegrationTests.Tests
 
             await unitOfWork.SaveChangesAsync();
 
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
             // Act
@@ -107,9 +107,7 @@ namespace IntegrationTests.Tests
                 Password = "asdqwezxc"
             };
 
-            var scope = _factory.Services.CreateScope();
-
-            var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
             string userToken = jwtService.GenerateToken(user);
 
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
@@ -126,6 +124,31 @@ namespace IntegrationTests.Tests
 
             // Assert
             Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task delete_story_story_not_found_return_404()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+
+            var user = new User
+            {
+                Email = "user@email.com",
+                Name = "user",
+                Password = "asdqwezxc"
+            };
+
+            var jwtService = _scope.ServiceProvider.GetRequiredService<IJwtService>();
+            string userToken = jwtService.GenerateToken(user);
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {userToken}");
+
+            // Act
+            var response = await client.DeleteAsync("api/story/delete/1");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
     }
 }

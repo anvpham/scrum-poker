@@ -21,9 +21,8 @@ namespace scrum_poker_server
 {
     public class Startup
     {
-        public IConfiguration _configuration { get; set; }
-
-        public IWebHostEnvironment _env { get; set; }
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
@@ -89,9 +88,11 @@ namespace scrum_poker_server
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
 
-            services
-                .AddSignalR()
-                .AddStackExchangeRedis(_configuration.GetConnectionString("Redis"), options =>
+            var signalrBuilder = services
+                .AddSignalR();
+
+            if (_env.EnvironmentName != "Testing")
+                signalrBuilder.AddStackExchangeRedis(_configuration.GetConnectionString("Redis"), options =>
                 {
                     options.Configuration.ChannelPrefix = "scrum-poker-hubs";
                 });
@@ -100,14 +101,18 @@ namespace scrum_poker_server
             AddCacheServices(services, _configuration);
         }
 
-        public static void AddCacheServices(IServiceCollection services, IConfiguration configuration)
+        public void AddCacheServices(IServiceCollection services, IConfiguration configuration)
         {
-            services
-                .AddStackExchangeRedisCache(options =>
-                {
-                    options.Configuration = configuration.GetConnectionString("Redis");
-                    options.InstanceName = "scrum-poker_";
-                });
+            if (_env.EnvironmentName == "Testing")
+                services.AddDistributedMemoryCache();
+            else
+                services
+                    .AddStackExchangeRedisCache(options =>
+                    {
+                        options.Configuration = configuration.GetConnectionString("Redis");
+                        options.InstanceName = "scrum-poker_";
+                    });
+
 
             services.AddTransient<ICacheService, CacheService>();
         }

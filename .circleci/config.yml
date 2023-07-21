@@ -67,7 +67,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - tfapply
+            - .
 
   terraform-apply:
     docker:
@@ -106,7 +106,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - tfdestroy
+            - .
 
   terraform-destroy:
     docker:

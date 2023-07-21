@@ -40,16 +40,11 @@ jobs:
         user: root
     steps:
       - attach_workspace:
-          at: /tmp/workspace
+          at: ~/tmp/workspace
       - checkout
       - run:
-          name: List directory
-          command: |
-            pwd
-            ls
-      - run:
           name: Setup env variables for load testing
-          working_directory: ~/project/tmp/workspace
+          working_directory: ~/tmp/workspace
           command: |
             pwd
             ls
